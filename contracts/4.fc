@@ -16,7 +16,7 @@ builder _store_builder(builder to, builder what) asm(what to) "STB";
   while (string.slice_bits()) {
     int ch = string~load_uint(8);
     b = b.store_slice(
-      begin_cell().store_uint((ch + shift + 255) % 255, 8).end_cell().begin_parse()
+      begin_cell().store_uint((ch + shift + 256) % 256, 8).end_cell().begin_parse()
     );
   }
 
