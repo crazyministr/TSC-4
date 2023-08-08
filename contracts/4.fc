@@ -9,33 +9,30 @@
 () recv_internal() {
 }
 
-global builder res;
+builder _store_builder(builder to, builder what) asm(what to) "STB";
 
-
-_ rec(int shift, slice string) {
-
+(builder) rec(int shift, slice string) {
   builder b = begin_cell();
   while (string.slice_bits()) {
     int ch = string~load_uint(8);
-    b.store_slice(
+    b = b.store_slice(
       begin_cell().store_uint((ch + shift + 255) % 255, 8).end_cell().begin_parse()
     );
   }
+
   if (string.slice_refs()) {
-    rec(shift, string.preload_ref().begin_parse());
+    builder res = rec(shift, string.preload_ref().begin_parse());
+    b = b.store_ref(res.end_cell());
   }
 
-  if (res.builder_bits()) {
-    b.store_ref(res.end_cell());
-  }
-  res = b;
+  return b;
 }
 
 cell do_algo(int shift, cell text) {
   slice string = text.begin_parse();
   string~skip_bits(32);
-  res = begin_cell();
-  return begin_cell().store_uint(0, 32).store_builder(res).end_cell();
+  builder res = rec(shift, string);
+  return begin_cell().store_uint(0, 32)._store_builder(res).end_cell();
 }
 
 ;; testable
