@@ -11,6 +11,7 @@
 
 builder _store_builder(builder to, builder what) asm(what to) "STB";
 
+
 (builder) rec(int shift, slice string) {
   builder b = begin_cell();
   while (string.slice_bits()) {
