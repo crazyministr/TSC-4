@@ -9,13 +9,41 @@
 () recv_internal() {
 }
 
+global builder res;
+
+
+_ rec(int shift, slice string) {
+
+  builder b = begin_cell();
+  while (string.slice_bits()) {
+    int ch = string~load_uint(8);
+    b.store_slice(
+      begin_cell().store_uint((ch + shift + 255) % 255, 8).end_cell().begin_parse()
+    );
+  }
+  if (string.slice_refs()) {
+    rec(shift, string.preload_ref().begin_parse());
+  }
+
+  if (res.builder_bits()) {
+    b.store_ref(res.end_cell());
+  }
+  res = b;
+}
+
+cell do_algo(int shift, cell text) {
+  slice string = text.begin_parse();
+  string~skip_bits(32);
+  res = begin_cell();
+  return begin_cell().store_uint(0, 32).store_builder(res).end_cell();
+}
+
 ;; testable
 (cell) caesar_cipher_encrypt(int shift, cell text) method_id {
-  return begin_cell().end_cell();
+  return do_algo(shift, text);
 }
 
 ;; testable
 (cell) caesar_cipher_decrypt(int shift, cell text) method_id {
-  return begin_cell().end_cell();
+  return do_algo(- shift, text);
 }
-
