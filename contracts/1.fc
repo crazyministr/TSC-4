@@ -11,11 +11,12 @@
 
 ;; testable
 (cell) find_branch_by_hash(int hash, cell tree) method_id {
-  if (cell_hash(root) == hash) {
-    return root;
+  if (cell_hash(tree) == hash) {
+    return tree;
   }
-  repeat (root.slice_refs()) {
-    cell found_cell = find_branch_by_hash(root~load_ref(), hash);
+  slice node = tree.begin_parse();
+  repeat (node.slice_refs()) {
+    cell found_cell = find_branch_by_hash(hash, node~load_ref());
     if (found_cell.begin_parse().slice_bits() > 0) {
       return found_cell;
     }
