@@ -11,5 +11,15 @@
 
 ;; testable
 (cell) find_branch_by_hash(int hash, cell tree) method_id {
+  if (cell_hash(root) == hash) {
+    return root;
+  }
+  repeat (root.slice_refs()) {
+    cell found_cell = find_branch_by_hash(root~load_ref(), hash);
+    if (found_cell.begin_parse().slice_bits() > 0) {
+      return found_cell;
+    }
+  }
+
   return begin_cell().end_cell();
 }
