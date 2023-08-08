@@ -17,7 +17,26 @@
 }
 
 ;; testable
-(tuple) fibonacci_sequence (int n) method_id {
-  return null();
+(tuple) fibonacci_sequence (int n, int k) method_id {
+  tuple res = empty_tuple();
+  if (k == 0) {
+    return res;
+  }
+  if (n == 0) {
+    res~tpush(0);
+  }
+  if ((n == 1) | ((n == 0) & (k > 1))) {
+    res~tpush(1);
+  }
+  (int prev, int cur, int i) = (0, 1, 2);
+  while (i < n + k) {
+    int nxt = prev + cur;
+    if (i >= n) {
+      res~tpush(nxt);
+    }
+    prev = cur;
+    cur = nxt;
+    i += 1;
+  }
+  return res;
 }
-
