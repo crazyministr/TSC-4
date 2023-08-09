@@ -16,6 +16,7 @@
 
 -}
 
+{-
 slice encode_number_to_text(int number) {
     builder text_b = begin_cell();
     if (number < 0) {
@@ -36,7 +37,6 @@ slice encode_number_to_text(int number) {
     return text;
 }
 
-{-
 ;; To disable log - remove impure to all functions
 ;; To enable log - add impure to all functions
 forall X -> X ~strdump_safe_not_pretty(slice value) impure asm "STRDUMP";
