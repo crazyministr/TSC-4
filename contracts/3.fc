@@ -16,13 +16,72 @@
 
 -}
 
+slice encode_number_to_text(int number) {
+    builder text_b = begin_cell();
+    if (number < 0) {
+        text_b = text_b.store_slice("-");
+        number = - number;
+    }
+    int len = 0;
+    int value = 0;
+    int mult = 1;
+    do {
+        (number, int res) = number.divmod(10);
+        value = value + (res + 48) * mult;
+        mult = mult * 256;
+        len = len + 1;
+    } until (number == 0);
+
+    slice text = text_b.store_uint(value, len * 8).end_cell().begin_parse();
+    return text;
+}
+
+{-
+;; To disable log - remove impure to all functions
+;; To enable log - add impure to all functions
+forall X -> X ~strdump_safe_not_pretty(slice value) impure asm "STRDUMP";
+forall X -> X ~dump_safe(X value) impure asm "s0 DUMP";
+
+_ ~strdump_safe(slice text) impure {
+    slice text_extended = begin_cell()
+            .store_slice("[🌊] ")
+            .store_slice(text)
+            .end_cell()
+            .begin_parse();
+
+    ~strdump_safe_not_pretty(text_extended);
+}
+
+_ ~strdump_value(slice text, var value) impure {
+    slice text_extended = begin_cell().store_slice("[🍭] ")
+            .store_slice(text)
+            .store_slice(": ")
+            .end_cell()
+            .begin_parse();
+    ~strdump_safe_not_pretty(text_extended);
+    ~dump_safe(value);
+}
+
+_ ~strdump_int(slice text, int value) impure {
+    slice text_extended = begin_cell()
+            .store_slice("[👀] ")
+            .store_slice(text)
+            .store_slice(": ")
+            .store_slice(encode_number_to_text(value))
+            .end_cell().begin_parse();
+    ~strdump_safe_not_pretty(text_extended);
+}
+-}
+
 () recv_internal() {
 }
 
-global cell value_by_idx;
+global cell end_of_replace;
+global builder empty_builder;
 
+(int) ubitsize (int a) asm "UBITSIZE";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
-(cell, int) custom::udict_get_ref?(cell dict, int key_len, int index) asm(index dict key_len) "DICTUGETREF";
+
 
 (builder) rec(int i, int buffer, int buffer_len, int flag, int flag_len, int value, cell llist) {
   slice cs = llist.begin_parse();
@@ -31,9 +90,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     int bit = cs~load_uint(1);
     if (buffer_len == flag_len) {
       int first_bit_pos = 1 << (buffer_len - 1);
-      ;; first_bit_pos~dump();
       int first_bit = buffer & first_bit_pos;
-      ;; first_bit~dump();
       if (first_bit) {
         buffer ^= first_bit_pos;
       }
@@ -42,19 +99,8 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       buffer = (buffer << 1) | bit;
       buffer_len += 1;
     }
-    ;; buffer~dump();
     if (buffer == flag) {
-      int shift = j - flag_len + 1;
-      int v_pos = flag_len - 1;
-      while (shift <= j) {
-        int v_bit = value & (1 << v_pos);
-        if (v_bit) {
-          v_bit = 1;
-        }
-        value_by_idx = value_by_idx.udict_set_builder(16, shift, begin_cell().store_uint(v_bit, 1));
-        shift += 1;
-        v_pos -= 1;
-      }
+      end_of_replace = end_of_replace.udict_set_builder(16, j, empty_builder);
       (buffer, buffer_len) = (0, 0);
     }
     j += 1;
@@ -62,36 +108,65 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   builder b = begin_cell();
   if (cs.slice_refs()) {
     builder inner_b = rec(j, buffer, buffer_len, flag, flag_len, value, cs.preload_ref());
-    b = b._store_builder_ref(inner_b);
+    b = b.store_builder(inner_b);
   }
 
-  j = i;
+  j -= 1;  ;; cuz added +1 above
   cs = llist.begin_parse();
-  cell local_dict = value_by_idx;
   while (cs.slice_bits()) {
-    int bit = cs~load_uint(1);
-    (slice val, int found?) = local_dict.udict_get?(16, j);
-    if (found?) {
-      bit = val.preload_uint(1);
+    int end_pos = -1;
+    if (~ dict_empty?(end_of_replace)) {
+      (end_pos, _, _) = end_of_replace.udict_get_max?(16);
     }
-    ;; bit~dump();
-    b = b.store_slice(
-      begin_cell().store_uint(bit, 1).end_cell().begin_parse()
-    );
-    j += 1;
+    int start_pos = end_pos - flag_len + 1;
+    ;; ~strdump_int("start_pos", start_pos);
+    ;; ~strdump_int("end_pos", end_pos);
+    ;; ~strdump_int("j", j);
+    if (j > end_pos) {
+      int bits_to_read = min(cs.slice_bits(), j - end_pos);
+      ;; ~strdump_int("bit_to_read", bits_to_read);
+      slice to_insert = cs.slice_last(bits_to_read);
+      cs~skip_last_bits(bits_to_read);
+      if (b.builder_bits() + bits_to_read < 1024) {
+        b = begin_cell().store_slice(to_insert).store_builder(b);
+      } else {
+        b = begin_cell().store_slice(to_insert)._store_builder_ref(b);
+      }
+      j -= bits_to_read;
+    } elseif (j >= start_pos) {  ;; & (j <= end_pos)
+      int bits_to_skip = min(cs.slice_bits(), j - start_pos + 1);
+      cs~skip_last_bits(bits_to_skip);
+
+      if (j == end_pos) {
+        int value_bits = ubitsize(value);
+        if (b.builder_bits() + value_bits < 1024) {
+          b = begin_cell().store_uint(value, value_bits).store_builder(b);
+        } else {
+          b = begin_cell().store_uint(value, value_bits)._store_builder_ref(b);
+        }
+
+      }
+
+      j -= bits_to_skip;
+    } else {
+      cell t = end_of_replace;
+      (t, _, _, _) = t.udict_delete_get_max(16);
+      end_of_replace = t;
+    }
+
   }
 
+  ;; ~strdump_int("b.builder_bits()", b.builder_bits());
   return b;
 }
 
 ;; testable
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
-  (int flag_len, int k) = (0, flag);
-  do {
-    flag_len += 1;
-    k >>= 1;
-  } until (k == 0);
-  cell value_by_idx = new_dict();
+  int flag_len = ubitsize(flag);
+
+  end_of_replace = new_dict();
+  empty_builder = begin_cell();
+
   builder ans = rec(0, 0, 0, flag, flag_len, value, linked_list);
 
   return ans.end_cell();
