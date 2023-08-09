@@ -31,9 +31,11 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     int bit = cs~load_uint(1);
     if (buffer_len == flag_len) {
       int first_bit_pos = 1 << (buffer_len - 1);
+      ;; first_bit_pos~dump();
       int first_bit = buffer & first_bit_pos;
+      ;; first_bit~dump();
       if (first_bit) {
-        buffer ^= (1 << first_bit_pos);
+        buffer ^= first_bit_pos;
       }
       buffer = (buffer << 1) | bit;
     } else {
@@ -72,6 +74,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     if (found?) {
       bit = val.preload_uint(1);
     }
+    ;; bit~dump();
     b = b.store_slice(
       begin_cell().store_uint(bit, 1).end_cell().begin_parse()
     );
