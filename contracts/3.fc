@@ -19,8 +19,77 @@
 () recv_internal() {
 }
 
-;; testable
-(cell) find_and_replace(int flag, int value, cell linked_list) method_id {
-  return begin_cell().end_cell();
+global cell value_by_idx;
+
+builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
+(cell, int) custom::udict_get_ref?(cell dict, int key_len, int index) asm(index dict key_len) "DICTUGETREF";
+
+(builder) rec(int i, int buffer, int buffer_len, int flag, int flag_len, int value, cell llist) {
+  slice cs = llist.begin_parse();
+  int j = i;
+  while (cs.slice_bits()) {
+    int bit = cs~load_uint(1);
+    if (buffer_len == flag_len) {
+      int first_bit_pos = 1 << (buffer_len - 1);
+      int first_bit = buffer & first_bit_pos;
+      if (first_bit) {
+        buffer ^= (1 << first_bit_pos);
+      }
+      buffer = (buffer << 1) | bit;
+    } else {
+      buffer = (buffer << 1) | bit;
+      buffer_len += 1;
+    }
+    ;; buffer~dump();
+    if (buffer == flag) {
+      int shift = j - flag_len + 1;
+      int v_pos = flag_len - 1;
+      while (shift <= j) {
+        int v_bit = value & (1 << v_pos);
+        if (v_bit) {
+          v_bit = 1;
+        }
+        value_by_idx = value_by_idx.udict_set_builder(16, shift, begin_cell().store_uint(v_bit, 1));
+        shift += 1;
+        v_pos -= 1;
+      }
+      (buffer, buffer_len) = (0, 0);
+    }
+    j += 1;
+  }
+  builder b = begin_cell();
+  if (cs.slice_refs()) {
+    builder inner_b = rec(j, buffer, buffer_len, flag, flag_len, value, cs.preload_ref());
+    b = b._store_builder_ref(inner_b);
+  }
+
+  j = i;
+  cs = llist.begin_parse();
+  cell local_dict = value_by_idx;
+  while (cs.slice_bits()) {
+    int bit = cs~load_uint(1);
+    (slice val, int found?) = local_dict.udict_get?(16, j);
+    if (found?) {
+      bit = val.preload_uint(1);
+    }
+    b = b.store_slice(
+      begin_cell().store_uint(bit, 1).end_cell().begin_parse()
+    );
+    j += 1;
+  }
+
+  return b;
 }
 
+;; testable
+(cell) find_and_replace(int flag, int value, cell linked_list) method_id {
+  (int flag_len, int k) = (0, flag);
+  do {
+    flag_len += 1;
+    k >>= 1;
+  } until (k == 0);
+  cell value_by_idx = new_dict();
+  builder ans = rec(0, 0, 0, flag, flag_len, value, linked_list);
+
+  return ans.end_cell();
+}
