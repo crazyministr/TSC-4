@@ -15,7 +15,7 @@
 
 () recv_internal() {
 }
-
+int tlen(tuple t) asm "TLEN";
 ;; testable
 (tuple) fibonacci_sequence (int n, int k) method_id {
   if (k == 0) {
@@ -28,8 +28,11 @@
   if ((n == 1) | ((n == 0) & (k > 1))) {
     res~tpush(1);
   }
+  if (tlen(res) == k) {
+    return res;
+  }
   (int i, int prev, int cur) = (2, 0, 1);
-  while (i < n + k) {
+  do {
     int nxt = prev + cur;
     if (i >= n) {
       res~tpush(nxt);
@@ -37,6 +40,6 @@
     prev = cur;
     cur = nxt;
     i += 1;
-  }
+  } until (i >= n + k);
   return res;
 }
