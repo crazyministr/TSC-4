@@ -9,7 +9,8 @@
 () recv_internal() {
 }
 
-int tlen(tuple t) asm "TLEN";
+;; int tlen(tuple t) asm "TLEN";
+forall X -> int is_null?(X x) asm "ISNULL";
 
 {-
 (cell) rec(int hash, cell tree) {
@@ -43,6 +44,6 @@ int tlen(tuple t) asm "TLEN";
     while (node.slice_refs()) {
       deque = cons(node~load_ref(), deque);
     }
-  } until (tlen(deque) == 0);
+  } until (is_null?(deque));
   return begin_cell().end_cell();
 }
