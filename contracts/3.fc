@@ -82,7 +82,6 @@ global builder empty_builder;
 (int) ubitsize (int a) asm "UBITSIZE";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
-
 (builder) rec(int i, int buffer, int buffer_len, int flag, int flag_len, int value, cell llist) {
   slice cs = llist.begin_parse();
   int j = i;

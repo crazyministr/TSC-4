@@ -10,22 +10,25 @@
 }
 
 
-(cell, int) rec(int hash, cell tree) {
+(cell) rec(int hash, cell tree) {
   if (cell_hash(tree) == hash) {
-    return (tree, -1);
+    return tree;
   }
   slice node = tree.begin_parse();
   repeat (node.slice_refs()) {
-    (cell found_cell, int found?) = rec(hash, node~load_ref());
-    if (found?) {
-      return (found_cell, found?);
+    cell found_cell = rec(hash, node~load_ref());
+    if (~ found_cell.cell_null?()) {
+      return found_cell;
     }
   }
-  return (begin_cell().end_cell(), 0);
+  return null();
 }
 
 ;; testable
 (cell) find_branch_by_hash(int hash, cell tree) method_id {
-  (cell res, _) = rec(hash, tree);
+  cell res = rec(hash, tree);
+  if (res.cell_null?()) {
+    return begin_cell().end_cell();
+  }
   return res;
 }
