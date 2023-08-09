@@ -81,8 +81,9 @@ global builder empty_builder;
 
 (int) ubitsize (int a) asm "UBITSIZE";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
+;; (cell) custom::udict_delete_get_max(cell dict, int key_len) asm(-> 0) "DICTUREMMAX";
 
-(builder) rec(int i, int buffer, int buffer_len, int flag, int flag_len, int value, cell llist) {
+(builder) rec(cell llist, int flag, int flag_len, int value, int i, int buffer, int buffer_len) {
   slice cs = llist.begin_parse();
   int j = i;
   while (cs.slice_bits()) {
@@ -93,11 +94,10 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       if (first_bit) {
         buffer ^= first_bit_pos;
       }
-      buffer = (buffer << 1) | bit;
     } else {
-      buffer = (buffer << 1) | bit;
       buffer_len += 1;
     }
+    buffer = (buffer << 1) | bit;
     if (buffer == flag) {
       end_of_replace = end_of_replace.udict_set_builder(16, j, empty_builder);
       (buffer, buffer_len) = (0, 0);
@@ -106,7 +106,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   }
   builder b = begin_cell();
   if (cs.slice_refs()) {
-    builder inner_b = rec(j, buffer, buffer_len, flag, flag_len, value, cs.preload_ref());
+    builder inner_b = rec(cs.preload_ref(), flag, flag_len, value, j, buffer, buffer_len);
     b = b.store_builder(inner_b);
   }
 
@@ -148,8 +148,9 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
       j -= bits_to_skip;
     } else {
-      cell t = end_of_replace;
-      (t, _, _, _) = t.udict_delete_get_max(16);
+      ;; end_of_replace = end_of_replace.custom::udict_delete_get_max(16);
+      ;; cell t = end_of_replace;
+      (cell t, _, _, _) = end_of_replace.udict_delete_get_max(16);
       end_of_replace = t;
     }
 
@@ -166,7 +167,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   end_of_replace = new_dict();
   empty_builder = begin_cell();
 
-  builder ans = rec(0, 0, 0, flag, flag_len, value, linked_list);
+  builder ans = rec(linked_list, flag, flag_len, value, 0, 0, 0);
 
   return ans.end_cell();
 }

@@ -9,6 +9,8 @@
 () recv_internal() {
 }
 
+builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
+
 (builder) rec(int shift, slice string) {
   builder b = begin_cell();
   while (string.slice_bits()) {
@@ -23,7 +25,7 @@
 
   if (string.slice_refs()) {
     builder res = rec(shift, string.preload_ref().begin_parse());
-    b = b.store_ref(res.end_cell());
+    b = b._store_builder_ref(res);
   }
 
   return b;
@@ -33,14 +35,18 @@
 (cell) caesar_cipher_encrypt(int shift, cell text) method_id {
   slice string = text.begin_parse();
   string~skip_bits(32);
-  builder res = rec(shift, string);
-  return begin_cell().store_uint(0, 32).store_builder(res).end_cell();
+  return begin_cell()
+    .store_uint(0, 32)
+    .store_builder(rec(shift, string))
+  .end_cell();
 }
 
 ;; testable
 (cell) caesar_cipher_decrypt(int shift, cell text) method_id {
   slice string = text.begin_parse();
   string~skip_bits(32);
-  builder res = rec(- shift, string);
-  return begin_cell().store_uint(0, 32).store_builder(res).end_cell();
+  return begin_cell()
+    .store_uint(0, 32)
+    .store_builder(rec(- shift, string))
+    .end_cell();
 }
