@@ -9,7 +9,9 @@
 () recv_internal() {
 }
 
+int tlen(tuple t) asm "TLEN";
 
+{-
 (cell) rec(int hash, cell tree) {
   if (cell_hash(tree) == hash) {
     return tree;
@@ -23,12 +25,24 @@
   }
   return null();
 }
+-}
+
 
 ;; testable
 (cell) find_branch_by_hash(int hash, cell tree) method_id {
-  cell res = rec(hash, tree);
-  if (res.cell_null?()) {
-    return begin_cell().end_cell();
-  }
-  return res;
+  ;; cell res = rec(hash, tree);
+  tuple deque = null();
+  deque = cons(tree, deque);
+
+  do {
+    (tree, deque) = uncons(deque);
+    if (cell_hash(tree) == hash) {
+      return tree;
+    }
+    slice node = tree.begin_parse();
+    while (node.slice_refs()) {
+      deque = cons(node~load_ref(), deque);
+    }
+  } until (tlen(deque) == 0);
+  return begin_cell().end_cell();
 }
