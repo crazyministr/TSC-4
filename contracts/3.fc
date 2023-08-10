@@ -76,14 +76,7 @@ _ ~strdump_int(slice text, int value) impure {
 () recv_internal() {
 }
 
-;; INFO: Test [__test8task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [15835]
-;; INFO: Test [__test8_2task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [16673]
-;; INFO: Test [__test8_3task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [15539]
-
-
-;; global cell end_of_replace;
 global tuple end_of_replace;
-;; global builder empty_builder;
 
 (int) ubitsize (int a) asm "UBITSIZE";
 forall X -> int is_null?(X x) asm "ISNULL";
@@ -98,7 +91,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
   repeat (cs.slice_bits()) {
     int bit = cs~load_uint(1);
-    
+
     if (buffer_len == flag_len) {  ;; shift buffer
       int first_bit_pos = 1 << (buffer_len - 1);
       int first_bit = buffer & first_bit_pos;
@@ -111,7 +104,6 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     buffer = (buffer << 1) | bit;
     if (buffer == flag) {
       end_of_replace = cons(j, end_of_replace);
-      ;; end_of_replace = end_of_replace.udict_set(16, j, empty_dict_value);
       (buffer, buffer_len) = (0, 0);
     }
     j += 1;
@@ -122,20 +114,14 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     b = b.store_builder(inner_b);
   }
 
-  j -= 1;  ;; cuz added +1 above
   cs = llist.begin_parse();
-  while (cs.slice_bits()) {
+  j -= 1;  ;; cuz added +1 above
+  while (j >= i) {
     int end_pos = -1;
     if (~ end_of_replace.is_null?()) {
       end_pos = car(end_of_replace);
     }
-    ;; if (~ dict_empty?(end_of_replace)) {
-    ;;   (end_pos, _, _) = end_of_replace.udict_get_max?(16);
-    ;; }
     int start_pos = end_pos - flag_len + 1;
-    ;; ~strdump_int("start_pos", start_pos);
-    ;; ~strdump_int("end_pos", end_pos);
-    ;; ~strdump_int("j", j);
     if (j > end_pos) {
       int bits_to_read = min(cs.slice_bits(), j - end_pos);
       ;; ~strdump_int("bit_to_read", bits_to_read);
@@ -163,26 +149,19 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
       j -= bits_to_skip;
     } else {
-      ;; end_of_replace = end_of_replace.custom::udict_delete_get_max(16);
-      ;; cell t = end_of_replace;
-      ;; (cell t, _, _, _) = end_of_replace.udict_delete_get_max(16);
       (_, tuple t) = uncons(end_of_replace);
       end_of_replace = t;
     }
 
   }
 
-  ;; ~strdump_int("b.builder_bits()", b.builder_bits());
   return b;
 }
 
 ;; testable
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
   int flag_len = ubitsize(flag);
-
-  ;; end_of_replace = new_dict();
   end_of_replace = null();
-  ;; empty_builder = begin_cell();
 
   builder ans = rec(linked_list, flag, flag_len, value, 0, 0, 0);
 
