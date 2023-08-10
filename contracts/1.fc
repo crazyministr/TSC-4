@@ -42,9 +42,11 @@ forall X -> int is_null?(X x) asm "ISNULL";
       return tree;
     }
     slice node = tree.begin_parse();
-    repeat (node.slice_refs()) {
+    repeat (node.slice_refs() - 1) {
       deque = cons(node~load_ref(), deque);
     }
+    deque = cons(node.preload_ref(), deque);
   } until (is_null?(deque));
+
   return begin_cell().end_cell();
 }
