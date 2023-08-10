@@ -22,13 +22,23 @@
     return (0, 1);
   }
   (int a, int b) = fn(n / 2);
-  int c = a * (b * 2 - a);
   int d = a * a + b * b;
-  if (n % 2 == 0) {
-    return (c, d);
+  int c = a * (b * 2 - a);
+  if (n & 1) {
+    return (d, c + d);
   }
-  return (d, c + d);
+  return (c, d);
 }
+
+;; tuple fill_res(tuple res, int fn, int fn2) asm ""
+;;   "SWAP" "TRUE"
+;;   "REPEAT:<{"
+;;     "ADD"
+;;     "TPUSH"
+;;     "ROT"
+;;   "}>"
+;;   "DROP"
+;; ;
 
 ;; testable
 (tuple) fibonacci_sequence (int n, int k) method_id {
@@ -47,15 +57,13 @@
     return res;
   }
   res~tpush(fn+1);
-  if (k == 2) {
-    return res;
-  }
+  ;; if (k == 2) {
+  ;;   return res;
+  ;; }
   k -= 2;
   repeat (k) {
-    int fn+2 = fn + fn+1;
-    res~tpush(fn+2);
-    fn = fn+1;
-    fn+1 = fn+2;
-  }
+    (fn, fn+1) = (fn+1, fn + fn+1);
+    res~tpush(fn+1);
+  };
   return res;
 }
