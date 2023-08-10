@@ -23,6 +23,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     b = b.store_uint(ch, 8);
   }
 
+  string~touch();
   if (string.slice_refs()) {
     builder res = rec(shift, string.preload_ref().begin_parse());
     b = b._store_builder_ref(res);
