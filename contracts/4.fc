@@ -13,7 +13,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 (builder) rec(int shift, slice string) {
   builder b = begin_cell();
-  while (string.slice_bits()) {
+  repeat (string.slice_bits() / 8) {
     int ch = string~load_uint(8);
     if ((ch >= 97) & (ch <= 122)) {  ;; a-z
       ch = ((ch - 97 + shift) % 26) + 97;
