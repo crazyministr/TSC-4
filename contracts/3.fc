@@ -77,18 +77,28 @@ _ ~strdump_int(slice text, int value) impure {
 }
 
 global cell end_of_replace;
-global builder empty_builder;
+;; global builder empty_builder;
 
 (int) ubitsize (int a) asm "UBITSIZE";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
+const empty_dict_value = "";
 ;; (cell) custom::udict_delete_get_max(cell dict, int key_len) asm(-> 0) "DICTUREMMAX";
 
 (builder) rec(cell llist, int flag, int flag_len, int value, int i, int buffer, int buffer_len) {
   slice cs = llist.begin_parse();
   int j = i;
+  ;; int shift = min(cs.slice_bits(), flag_len - buffer_len - 1);
+  ;; if (shift > 0) {
+  ;;   int bit = cs~load_uint(shift);
+  ;;   buffer = (buffer << shift) | bit;
+  ;;   buffer_len += shift;
+  ;;   j += shift;
+  ;; }
+
   while (cs.slice_bits()) {
     int bit = cs~load_uint(1);
-    if (buffer_len == flag_len) {
+    
+    if (buffer_len == flag_len) {  ;; shift buffer
       int first_bit_pos = 1 << (buffer_len - 1);
       int first_bit = buffer & first_bit_pos;
       if (first_bit) {
@@ -99,7 +109,8 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     }
     buffer = (buffer << 1) | bit;
     if (buffer == flag) {
-      end_of_replace = end_of_replace.udict_set_builder(16, j, empty_builder);
+      j~dump();
+      end_of_replace = end_of_replace.udict_set(16, j, empty_dict_value);
       (buffer, buffer_len) = (0, 0);
     }
     j += 1;
@@ -165,7 +176,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   int flag_len = ubitsize(flag);
 
   end_of_replace = new_dict();
-  empty_builder = begin_cell();
+  ;; empty_builder = begin_cell();
 
   builder ans = rec(linked_list, flag, flag_len, value, 0, 0, 0);
 

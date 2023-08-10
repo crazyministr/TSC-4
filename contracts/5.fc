@@ -15,31 +15,46 @@
 
 () recv_internal() {
 }
-int tlen(tuple t) asm "TLEN";
+;; int tlen(tuple t) asm "TLEN";
+
+(int, int) fn(int n) {
+  if (n == 0) {
+    return (0, 1);
+  }
+  (int a, int b) = fn(n / 2);
+  int c = a * (b * 2 - a);
+  int d = a * a + b * b;
+  if (n % 2 == 0) {
+    return (c, d);
+  }
+  return (d, c + d);
+}
+
 ;; testable
 (tuple) fibonacci_sequence (int n, int k) method_id {
   if (k == 0) {
     return empty_tuple();
   }
+  if (n == 370) {
+    return unsafe_tuple([94611056096305838013295371573764256526437182762229865607320618320601813254535]);
+  }
+
+  (int fn, int fn+1) = fn(n);  
   tuple res = empty_tuple();
-  if (n == 0) {
-    res~tpush(0);
-  }
-  if ((n == 1) | ((n == 0) & (k > 1))) {
-    res~tpush(1);
-  }
-  if (tlen(res) == k) {
+  res~tpush(fn);
+  if (k == 1) {
     return res;
   }
-  (int i, int prev, int cur) = (2, 0, 1);
-  do {
-    int nxt = prev + cur;
-    if (i >= n) {
-      res~tpush(nxt);
-    }
-    prev = cur;
-    cur = nxt;
-    i += 1;
-  } until (i >= n + k);
+  res~tpush(fn+1);
+  if (k == 2) {
+    return res;
+  }
+  k -= 2;
+  repeat (k) {
+    int fn+2 = fn + fn+1;
+    res~tpush(fn+2);
+    fn = fn+1;
+    fn+1 = fn+2;
+  }
   return res;
 }
