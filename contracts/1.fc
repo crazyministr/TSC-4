@@ -11,6 +11,7 @@
 
 ;; int tlen(tuple t) asm "TLEN";
 forall X -> int is_null?(X x) asm "ISNULL";
+;; forall X -> X back(tuple) asm "LAST";
 
 {-
 (cell) rec(int hash, cell tree) {
@@ -34,14 +35,14 @@ forall X -> int is_null?(X x) asm "ISNULL";
   ;; cell res = rec(hash, tree);
   tuple deque = null();
   deque = cons(tree, deque);
-
+  
   do {
     (tree, deque) = uncons(deque);
     if (cell_hash(tree) == hash) {
       return tree;
     }
     slice node = tree.begin_parse();
-    while (node.slice_refs()) {
+    repeat (node.slice_refs()) {
       deque = cons(node~load_ref(), deque);
     }
   } until (is_null?(deque));
