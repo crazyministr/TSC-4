@@ -129,7 +129,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       } else {
         stack = cons(preb, stack);
         stack_len += 1;
-        preb = begin_cell();
+        preb = begin_cell().store_uint(value, value_bits);
       }
       (buffer, buffer_len) = (0, 0);
     }
