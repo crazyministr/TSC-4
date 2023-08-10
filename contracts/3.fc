@@ -76,12 +76,20 @@ _ ~strdump_int(slice text, int value) impure {
 () recv_internal() {
 }
 
-global cell end_of_replace;
+;; INFO: Test [__test8task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [15835]
+;; INFO: Test [__test8_2task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [16673]
+;; INFO: Test [__test8_3task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [15539]
+
+
+;; global cell end_of_replace;
+global tuple end_of_replace;
 ;; global builder empty_builder;
 
 (int) ubitsize (int a) asm "UBITSIZE";
+forall X -> int is_null?(X x) asm "ISNULL";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
-const empty_dict_value = "";
+
+;; const empty_dict_value = "";
 ;; (cell) custom::udict_delete_get_max(cell dict, int key_len) asm(-> 0) "DICTUREMMAX";
 
 (builder) rec(cell llist, int flag, int flag_len, int value, int i, int buffer, int buffer_len) {
@@ -102,7 +110,8 @@ const empty_dict_value = "";
     }
     buffer = (buffer << 1) | bit;
     if (buffer == flag) {
-      end_of_replace = end_of_replace.udict_set(16, j, empty_dict_value);
+      end_of_replace = cons(j, end_of_replace);
+      ;; end_of_replace = end_of_replace.udict_set(16, j, empty_dict_value);
       (buffer, buffer_len) = (0, 0);
     }
     j += 1;
@@ -117,9 +126,12 @@ const empty_dict_value = "";
   cs = llist.begin_parse();
   while (cs.slice_bits()) {
     int end_pos = -1;
-    if (~ dict_empty?(end_of_replace)) {
-      (end_pos, _, _) = end_of_replace.udict_get_max?(16);
+    if (~ end_of_replace.is_null?()) {
+      end_pos = car(end_of_replace);
     }
+    ;; if (~ dict_empty?(end_of_replace)) {
+    ;;   (end_pos, _, _) = end_of_replace.udict_get_max?(16);
+    ;; }
     int start_pos = end_pos - flag_len + 1;
     ;; ~strdump_int("start_pos", start_pos);
     ;; ~strdump_int("end_pos", end_pos);
@@ -153,7 +165,8 @@ const empty_dict_value = "";
     } else {
       ;; end_of_replace = end_of_replace.custom::udict_delete_get_max(16);
       ;; cell t = end_of_replace;
-      (cell t, _, _, _) = end_of_replace.udict_delete_get_max(16);
+      ;; (cell t, _, _, _) = end_of_replace.udict_delete_get_max(16);
+      (_, tuple t) = uncons(end_of_replace);
       end_of_replace = t;
     }
 
@@ -167,7 +180,8 @@ const empty_dict_value = "";
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
   int flag_len = ubitsize(flag);
 
-  end_of_replace = new_dict();
+  ;; end_of_replace = new_dict();
+  end_of_replace = null();
   ;; empty_builder = begin_cell();
 
   builder ans = rec(linked_list, flag, flag_len, value, 0, 0, 0);
