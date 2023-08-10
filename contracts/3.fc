@@ -87,15 +87,8 @@ const empty_dict_value = "";
 (builder) rec(cell llist, int flag, int flag_len, int value, int i, int buffer, int buffer_len) {
   slice cs = llist.begin_parse();
   int j = i;
-  ;; int shift = min(cs.slice_bits(), flag_len - buffer_len - 1);
-  ;; if (shift > 0) {
-  ;;   int bit = cs~load_uint(shift);
-  ;;   buffer = (buffer << shift) | bit;
-  ;;   buffer_len += shift;
-  ;;   j += shift;
-  ;; }
 
-  while (cs.slice_bits()) {
+  repeat (cs.slice_bits()) {
     int bit = cs~load_uint(1);
     
     if (buffer_len == flag_len) {  ;; shift buffer
@@ -109,7 +102,6 @@ const empty_dict_value = "";
     }
     buffer = (buffer << 1) | bit;
     if (buffer == flag) {
-      j~dump();
       end_of_replace = end_of_replace.udict_set(16, j, empty_dict_value);
       (buffer, buffer_len) = (0, 0);
     }
