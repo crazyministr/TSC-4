@@ -76,6 +76,11 @@ _ ~strdump_int(slice text, int value) impure {
 () recv_internal() {
 }
 
+
+;; INFO: Test [__test8task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [14880]
+;; INFO: Test [__test8_2task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [15713]
+;; INFO: Test [__test8_3task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [15539]
+
 global tuple end_of_replace;
 
 (int) ubitsize (int a) asm "UBITSIZE";
@@ -89,34 +94,85 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   slice cs = llist.begin_parse();
   int j = i;
 
+  int stack_len = 0;
+  tuple stack = null();
+  builder preb = begin_cell();
   repeat (cs.slice_bits()) {
     int bit = cs~load_uint(1);
 
     if (buffer_len == flag_len) {  ;; shift buffer
       int first_bit_pos = 1 << (buffer_len - 1);
       int first_bit = buffer & first_bit_pos;
+      int to_store_bit = 0;
       if (first_bit) {
         buffer ^= first_bit_pos;
+        to_store_bit = 1;
+      }
+      if (preb.builder_bits() < 1023) {  ;; + 1 < 1024
+      ;; ~strdump("store bit");
+        preb = preb.store_uint(to_store_bit, 1);
+      } else {
+        stack = cons(preb, stack);
+        stack_len += 1;
+        preb = begin_cell().store_uint(to_store_bit, 1);
       }
     } else {
       buffer_len += 1;
     }
     buffer = (buffer << 1) | bit;
     if (buffer == flag) {
-      end_of_replace = cons(j, end_of_replace);
+      ;; end_of_replace = cons(j, end_of_replace);
+      int value_bits = ubitsize(value);
+      if (preb.builder_bits() + value_bits < 1024) {
+        ;; ~strdump("store value");
+        preb = preb.store_uint(value, value_bits);
+      } else {
+        stack = cons(preb, stack);
+        stack_len += 1;
+        preb = begin_cell();
+      }
       (buffer, buffer_len) = (0, 0);
     }
     j += 1;
   }
-  builder b = begin_cell();
+
+  ;; builder b = begin_cell();
   if (cs.slice_refs()) {
     builder inner_b = rec(cs.preload_ref(), flag, flag_len, value, j, buffer, buffer_len);
-    b = b.store_builder(inner_b);
+    ;; preb~dump();
+    ;; preb = preb._store_builder_ref(inner_b);
+    if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
+      preb = preb.store_builder(inner_b);
+    } else {
+      preb = preb._store_builder_ref(inner_b);
+    }
   }
 
+  ;; j -= 1;  ;; cuz added +1 above
+
+  ;; add buffer to preb
+  ;; if ((buffer_len == flag_len) | ((buffer_len == j) & (buffer_len > 0))) {
+  elseif ((buffer_len > 0) & ((i == 0) | (cs.slice_refs() == 0))) {
+    if (preb.builder_bits() + buffer_len < 1024) {  ;; + 1 < 1024
+      preb = preb.store_uint(buffer, buffer_len);
+    } else {
+      stack = cons(preb, stack);
+      stack_len += 1;
+      preb = begin_cell().store_uint(buffer, buffer_len);
+    }
+  }
+
+  repeat (stack_len) {
+    (builder parent, stack) = uncons(stack);
+    preb = parent._store_builder_ref(preb);
+  }
+
+  ;; preb~dump();
+  return preb;
+
+  {-
   cs = llist.begin_parse();
-  j -= 1;  ;; cuz added +1 above
-  while (j >= i) {
+  while (cs.slice_bits()) {
     int end_pos = -1;
     if (~ end_of_replace.is_null?()) {
       end_pos = car(end_of_replace);
@@ -154,8 +210,8 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     }
 
   }
-
   return b;
+  -}
 }
 
 ;; testable
