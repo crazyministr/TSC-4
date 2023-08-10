@@ -77,12 +77,6 @@ _ ~strdump_int(slice text, int value) impure {
 }
 
 
-;; INFO: Test [__test8task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [14880]
-;; INFO: Test [__test8_2task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [15713]
-;; INFO: Test [__test8_3task] status: [SUCCESS] Test result: [[]] Total gas used (including testing code): [15539]
-
-global tuple end_of_replace;
-
 (int) ubitsize (int a) asm "UBITSIZE";
 forall X -> int is_null?(X x) asm "ISNULL";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
@@ -90,9 +84,8 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 ;; const empty_dict_value = "";
 ;; (cell) custom::udict_delete_get_max(cell dict, int key_len) asm(-> 0) "DICTUREMMAX";
 
-(builder) rec(cell llist, int flag, int flag_len, int value, int i, int buffer, int buffer_len) {
+(builder) rec(cell llist, int flag, int flag_len, int value, int buffer, int buffer_len) {
   slice cs = llist.begin_parse();
-  int j = i;
 
   int stack_len = 0;
   tuple stack = null();
@@ -109,7 +102,6 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
         to_store_bit = 1;
       }
       if (preb.builder_bits() < 1023) {  ;; + 1 < 1024
-      ;; ~strdump("store bit");
         preb = preb.store_uint(to_store_bit, 1);
       } else {
         stack = cons(preb, stack);
@@ -121,10 +113,8 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     }
     buffer = (buffer << 1) | bit;
     if (buffer == flag) {
-      ;; end_of_replace = cons(j, end_of_replace);
       int value_bits = ubitsize(value);
       if (preb.builder_bits() + value_bits < 1024) {
-        ;; ~strdump("store value");
         preb = preb.store_uint(value, value_bits);
       } else {
         stack = cons(preb, stack);
@@ -133,14 +123,10 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       }
       (buffer, buffer_len) = (0, 0);
     }
-    j += 1;
   }
 
-  ;; builder b = begin_cell();
   if (cs.slice_refs()) {
-    builder inner_b = rec(cs.preload_ref(), flag, flag_len, value, j, buffer, buffer_len);
-    ;; preb~dump();
-    ;; preb = preb._store_builder_ref(inner_b);
+    builder inner_b = rec(cs.preload_ref(), flag, flag_len, value, buffer, buffer_len);
     if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
       preb = preb.store_builder(inner_b);
     } else {
@@ -148,11 +134,6 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     }
   }
 
-  ;; j -= 1;  ;; cuz added +1 above
-
-  ;; add buffer to preb
-  ;; if ((buffer_len == flag_len) | ((buffer_len == j) & (buffer_len > 0))) {
-  ;; elseif ((buffer_len > 0) & ((i == 0) | (cs.slice_refs() == 0))) {
   elseif (buffer_len > 0) {
     if (preb.builder_bits() + buffer_len < 1024) {  ;; + 1 < 1024
       preb = preb.store_uint(buffer, buffer_len);
@@ -168,59 +149,14 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     preb = parent._store_builder_ref(preb);
   }
 
-  ;; preb~dump();
   return preb;
-
-  {-
-  cs = llist.begin_parse();
-  while (cs.slice_bits()) {
-    int end_pos = -1;
-    if (~ end_of_replace.is_null?()) {
-      end_pos = car(end_of_replace);
-    }
-    int start_pos = end_pos - flag_len + 1;
-    if (j > end_pos) {
-      int bits_to_read = min(cs.slice_bits(), j - end_pos);
-      ;; ~strdump_int("bit_to_read", bits_to_read);
-      slice to_insert = cs.slice_last(bits_to_read);
-      cs~skip_last_bits(bits_to_read);
-      if (b.builder_bits() + bits_to_read < 1024) {
-        b = begin_cell().store_slice(to_insert).store_builder(b);
-      } else {
-        b = begin_cell().store_slice(to_insert)._store_builder_ref(b);
-      }
-      j -= bits_to_read;
-    } elseif (j >= start_pos) {  ;; & (j <= end_pos)
-      int bits_to_skip = min(cs.slice_bits(), j - start_pos + 1);
-      cs~skip_last_bits(bits_to_skip);
-
-      if (j == end_pos) {
-        int value_bits = ubitsize(value);
-        if (b.builder_bits() + value_bits < 1024) {
-          b = begin_cell().store_uint(value, value_bits).store_builder(b);
-        } else {
-          b = begin_cell().store_uint(value, value_bits)._store_builder_ref(b);
-        }
-
-      }
-
-      j -= bits_to_skip;
-    } else {
-      (_, tuple t) = uncons(end_of_replace);
-      end_of_replace = t;
-    }
-
-  }
-  return b;
-  -}
 }
 
 ;; testable
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
   int flag_len = ubitsize(flag);
-  end_of_replace = null();
 
-  builder ans = rec(linked_list, flag, flag_len, value, 0, 0, 0);
+  builder ans = rec(linked_list, flag, flag_len, value, 0, 0);
 
   return ans.end_cell();
 }
