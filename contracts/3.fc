@@ -77,6 +77,7 @@ _ ~strdump_int(slice text, int value) impure {
 }
 
 
+forall X -> (tuple, X) ~tpop(tuple t) asm "TPOP";
 (int) ubitsize (int a) asm "UBITSIZE";
 forall X -> int is_null?(X x) asm "ISNULL";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
@@ -104,7 +105,8 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       if (preb.builder_bits() < 1023) {  ;; + 1 < 1024
         preb = preb.store_uint(to_store_bit, 1);
       } else {
-        stack = cons(preb, stack);
+        ;; stack = cons(preb, stack);
+        stack~tpush(preb);
         stack_len += 1;
         preb = begin_cell().store_uint(to_store_bit, 1);
       }
@@ -117,7 +119,8 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       if (preb.builder_bits() + value_bits < 1024) {
         preb = preb.store_uint(value, value_bits);
       } else {
-        stack = cons(preb, stack);
+        ;; stack = cons(preb, stack);
+        stack~tpush(preb);
         stack_len += 1;
         preb = begin_cell().store_uint(value, value_bits);
       }
@@ -138,14 +141,16 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     if (preb.builder_bits() + buffer_len < 1024) {  ;; + 1 < 1024
       preb = preb.store_uint(buffer, buffer_len);
     } else {
-      stack = cons(preb, stack);
+      ;; stack = cons(preb, stack);
+      stack~tpush(preb);
       stack_len += 1;
       preb = begin_cell().store_uint(buffer, buffer_len);
     }
   }
 
   repeat (stack_len) {
-    (builder parent, stack) = uncons(stack);
+    ;; (builder parent, stack) = uncons(stack);
+    builder parent = stack~tpop();
     preb = parent._store_builder_ref(preb);
   }
 
