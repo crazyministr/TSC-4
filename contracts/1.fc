@@ -33,19 +33,22 @@ forall X -> int is_null?(X x) asm "ISNULL";
 ;; testable
 (cell) find_branch_by_hash(int hash, cell tree) method_id {
   ;; cell res = rec(hash, tree);
+  if (cell_hash(tree) == hash) {
+    return tree;
+  }
   tuple deque = null();
   deque = cons(tree, deque);
   
   do {
     (tree, deque) = uncons(deque);
-    if (cell_hash(tree) == hash) {
-      return tree;
-    }
     slice node = tree.begin_parse();
-    repeat (node.slice_refs() - 1) {
-      deque = cons(node~load_ref(), deque);
+    repeat (node.slice_refs()) {
+      cell nxt_ref = node~load_ref();
+      if (cell_hash(nxt_ref) == hash) {
+        return nxt_ref;
+      }
+      deque = cons(nxt_ref, deque);
     }
-    deque = cons(node.preload_ref(), deque);
   } until (is_null?(deque));
 
   return begin_cell().end_cell();
