@@ -33,7 +33,6 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 ;; testable
 (cell) caesar_cipher_encrypt(int shift, cell text) method_id {
-  set_data(text);
   slice string = text.begin_parse();
   string~skip_bits(32);
   return begin_cell()
@@ -44,11 +43,10 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 ;; testable
 (cell) caesar_cipher_decrypt(int shift, cell text) method_id {
-  return get_data();
-  ;; slice string = text.begin_parse();
-  ;; string~skip_bits(32);
-  ;; return begin_cell()
-  ;;   .store_uint(0, 32)
-  ;;   .store_builder(rec(- shift, string))
-  ;;   .end_cell();
+  slice string = text.begin_parse();
+  string~skip_bits(32);
+  return begin_cell()
+    .store_uint(0, 32)
+    .store_builder(rec(- shift, string))
+    .end_cell();
 }
