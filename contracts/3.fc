@@ -77,13 +77,13 @@ _ ~strdump_int(slice text, int value) impure {
 }
 
 
-forall X -> (tuple, X) ~pop_back(tuple t) asm "TPOP";
 (int) ubitsize (int a) asm "UBITSIZE";
 forall X -> int is_null?(X x) asm "ISNULL";
+forall X -> (tuple, X) ~pop_back(tuple t) asm "TPOP";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 
-(builder) rec(cell llist, int flag, int flag_len, int value, int buffer, int buffer_len) {
+(builder) rec(int flag, int flag_len, int value, int buffer, int buffer_len, cell llist) {
   slice cs = llist.begin_parse();
 
   ;; read up to `flag_len - 1` bits
@@ -133,7 +133,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   }
 
   if (cs.slice_refs()) {
-    builder inner_b = rec(cs.preload_ref(), flag, flag_len, value, buffer, buffer_len);
+    builder inner_b = rec(flag, flag_len, value, buffer, buffer_len, cs.preload_ref());
 
     if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
       preb = preb.store_builder(inner_b);
@@ -163,7 +163,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
   int flag_len = ubitsize(flag);
 
-  builder ans = rec(linked_list, flag, flag_len, value, 0, 0);
+  builder ans = rec(flag, flag_len, value, 0, 0, linked_list);
 
   return ans.end_cell();
 }
