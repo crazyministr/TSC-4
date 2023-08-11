@@ -115,7 +115,6 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
         stack_len += 1;
         preb = begin_cell().store_uint(to_store_bit, 1);
       }
-      buffer = (buffer << 1) | bit;
 
       ;; int real_buffer_len = ubitsize(buffer);
       ;; if (real_buffer_len < flag_len) {
@@ -136,8 +135,8 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       ;; }
     } else {
       buffer_len += 1;
-      buffer = (buffer << 1) | bit;
     }
+    buffer = (buffer << 1) | bit;
     if (buffer == flag) {
       int value_bits = ubitsize(value);
       if (preb.builder_bits() + value_bits < 1024) {
