@@ -88,6 +88,13 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 (builder) rec(cell llist, int flag, int flag_len, int value, int buffer, int buffer_len) {
   slice cs = llist.begin_parse();
 
+  int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len - 1);
+  if (bits_to_read > 0) {
+    int val = cs~load_uint(bits_to_read);
+    buffer = (buffer << bits_to_read) | val;
+    buffer_len += bits_to_read;
+  }
+  ;; buffer~dump();
   int stack_len = 0;
   tuple stack = empty_tuple();
   builder preb = begin_cell();
