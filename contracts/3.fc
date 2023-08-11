@@ -97,6 +97,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   int stack_len = 0;
   tuple stack = empty_tuple();
   builder preb = begin_cell();
+  cs~touch();
   repeat (cs.slice_bits()) {
     int bit = cs~load_uint(1);
 
@@ -178,6 +179,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     }
   }
 
+  stack~touch();
   repeat (stack_len) {
     builder parent = stack~pop_back();
     preb = parent._store_builder_ref(preb);
