@@ -83,11 +83,11 @@ forall X -> (tuple, X) ~pop_back(tuple t) asm "TPOP";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 
-(builder) rec(int flag, int flag_len, int value, int buffer, int buffer_len, cell llist) {
+(builder) rec(int flag, int value, int buffer, int buffer_len, cell llist) {
   slice cs = llist.begin_parse();
 
   ;; read up to `flag_len - 1` bits
-  int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len - 1);
+  int bits_to_read = min(cs.slice_bits(), ubitsize(flag) - buffer_len - 1);
   if (bits_to_read > 0) {
     int val = cs~load_uint(bits_to_read);
     buffer = (buffer << bits_to_read) | val;
@@ -100,7 +100,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   repeat (cs.slice_bits()) {
     int bit = cs~load_uint(1);
 
-    if (buffer_len == flag_len) {  ;; shift buffer
+    if (buffer_len == ubitsize(flag)) {  ;; shift buffer
       int first_bit_pos = 1 << (buffer_len - 1);
       int first_bit = buffer & first_bit_pos;
       int to_store_bit = 0;
@@ -133,7 +133,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   }
 
   if (cs.slice_refs()) {
-    builder inner_b = rec(flag, flag_len, value, buffer, buffer_len, cs.preload_ref());
+    builder inner_b = rec(flag, value, buffer, buffer_len, cs.preload_ref());
 
     if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
       preb = preb.store_builder(inner_b);
@@ -161,9 +161,9 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 ;; testable
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
-  int flag_len = ubitsize(flag);
+  ;; int flag_len = ubitsize(flag);
 
-  builder ans = rec(flag, flag_len, value, 0, 0, linked_list);
+  builder ans = rec(flag, value, 0, 0, linked_list);
 
   return ans.end_cell();
 }
