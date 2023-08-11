@@ -132,7 +132,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
         } else {
           int l = value_bits - bits_left;
           int v = value >> l;
-          preb.store_uint(v, bits_left);
+          preb = preb.store_uint(v, bits_left);
           stack~tpush(preb);
           stack_len += 1;
           preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
