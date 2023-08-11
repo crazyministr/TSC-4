@@ -16,9 +16,9 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   {-
   int n = 0;
   tuple stack = null();
-  builder b = null();
+  builder b = begin_cell();
   do {
-    b = begin_cell();
+    
     repeat (string.slice_bits() >> 3) {
       int ch = string~load_uint(8);
       if ((ch >= 97) & (ch <= 122)) {  ;; a-z
@@ -26,14 +26,19 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       } elseif ((ch >= 65) & (ch <= 90)) {  ;; A-Z
         ch = ((ch - 65 + shift) % 26) + 65;
       }
-      b = b.store_uint(ch, 8);
+      if (b.builder_bits() + 8 < 1024) {
+        b = b.store_uint(ch, 8);
+      } else {
+        stack = cons(b, stack);
+        n += 1;
+        b = begin_cell().store_uint(ch, 8);
+      }
+      
     }
 
     int f = -1;
     if (string.slice_refs()) {
       string = string.preload_ref().begin_parse();
-      stack = cons(b, stack);
-      n += 1;
     } else {
       f = 0;
     }
@@ -44,8 +49,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     (builder p, stack) = uncons(stack);
     b = p._store_builder_ref(b);
   }
-  -}
-
+-}
   builder b = begin_cell();
   repeat (string.slice_bits() >> 3) {
     int ch = string~load_uint(8);
@@ -59,9 +63,9 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
   if (string.slice_refs()) {
     builder res = rec(shift, string.preload_ref().begin_parse());
-    if (b.builder_bits() + res.builder_bits() < 1024) {
-      return b.store_builder(res);
-    }
+    ;; if (b.builder_bits() + res.builder_bits() < 1024) {
+    ;;   return b.store_builder(res);
+    ;; }
     return b._store_builder_ref(res);
   }
 
@@ -70,6 +74,9 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 ;; testable
 (cell) caesar_cipher_encrypt(int shift, cell text) method_id {
+  cell c = get_data();
+  throw_unless(c.cell_null?(), 1001);
+  set_data(text);
   slice string = text.begin_parse();
   string~skip_bits(32);
   return begin_cell()
@@ -80,6 +87,9 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 ;; testable
 (cell) caesar_cipher_decrypt(int shift, cell text) method_id {
+  cell c = get_data();
+  throw_unless(c.cell_null?(), 1001);
+  set_data(text);
   slice string = text.begin_parse();
   string~skip_bits(32);
   return begin_cell()
