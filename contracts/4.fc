@@ -73,7 +73,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   repeat (string.slice_bits() / 8) {
     int ch = string~load_uint(8);
     ;; ch~dump();
-    int tt = t.at(ch);
+    ;; int tt = t.at(ch);
     ;; tt~dump();
     ;; int num = (ch - 1) & 31;
     ;; if ((num < 26) & (ch > 64) & (ch < 123)) {
@@ -104,7 +104,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 (cell) caesar_cipher_encrypt(int shift, cell text) method_id {
   tuple t = empty_tuple();
   int i = 0;
-  repeat (255) {
+  repeat (130) {
     int ch = i;
     if ((ch > 96) & (ch < 123)) {  ;; a-z
       ch = ((ch - 97 + shift) % 26) + 97;
@@ -126,7 +126,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 (cell) caesar_cipher_decrypt(int shift, cell text) method_id {
   tuple t = empty_tuple();
   int i = 0;
-  repeat (255) {
+  repeat (130) {
     int ch = i;
     if ((ch > 96) & (ch < 123)) {  ;; a-z
       ch = ((ch - 97 - shift) % 26) + 97;
