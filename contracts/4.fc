@@ -73,7 +73,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   repeat (string.slice_bits() / 8) {
     int ch = string~load_uint(8);
     int num = ch & 31;
-    if ((ch > 64) & (ch < 123) & (num > 0) & (num < 27)) {
+    if ((num < 27) & (ch > 64) & (ch < 123) & (num > 0)) {
       ;; ch~dump(); num~dump();
       ch += (((num - 1) + shift) % 26 + 1) - num;
       ;; ch~dump();
