@@ -138,7 +138,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       buffer_len += 1;
     }
     buffer = (buffer << 1) | bit;
-    if (buffer ^ flag == 0) {
+    if (buffer == flag) {
       int value_bits = ubitsize(value);
       if (preb.builder_bits() + value_bits < 1024) {
         preb = preb.store_uint(value, value_bits);
