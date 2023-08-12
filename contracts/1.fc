@@ -36,7 +36,7 @@ forall X -> int is_null?(X x) asm "ISNULL";
   tuple deque = null();
   deque = cons(tree, deque);
   
-  repeat (500) {
+  repeat (700) {
     (tree, deque) = uncons(deque);
     if (cell_hash(tree) == hash) {
       return tree;
