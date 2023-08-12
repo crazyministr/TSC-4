@@ -40,16 +40,33 @@
 ;;   "DROP"
 ;; ;
 
-;; testable
+;; cell big:dicKt() asm "<b B{B5EE9C72410101010043000081D2000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000039C3D4D27} B>boc ref, b> <s PUSHSLICE";
+
 (tuple) fibonacci_sequence (int n, int k) method_id {
+  ;; cell d = new_dict();
+  ;; d~udict_set_builder(9, 0, begin_cell().store_uint(0, 1).store_uint(1, 1));
+  ;; d~dump();
+  ;; cell d = big:dicKt();
+  ;; slice dd = ddd.begin_parse();
+  ;; cell d = dd~load_dict();
+  ;; d~dump();
+  ;; (slice c, _) = d.udict_get?(9, 0);
+  ;; c~dump();
+  ;; slice v = c.begin_parse();
+  ;; v~dump();
+  ;; int f = v~load_uint(256);
+  ;; f~dump();
+  ;; f = v~load_uint(256);
+  ;; f~dump();
+
   if (k == 0) {
     return empty_tuple();
   }
   tuple res = empty_tuple();
-  if (n == 370) {
-    res~tpush(94611056096305838013295371573764256526437182762229865607320618320601813254535);
-    return res;
-  }
+  ;; if (n == 370) {
+  ;;   res~tpush(94611056096305838013295371573764256526437182762229865607320618320601813254535);
+  ;;   return res;
+  ;; }
 
   (int fn, int fn+1) = fn(n);
   res~tpush(fn);
@@ -57,9 +74,9 @@
     return res;
   }
   res~tpush(fn+1);
-  ;; if (k == 2) {
-  ;;   return res;
-  ;; }
+  if (k == 2) {
+    return res;
+  }
   k -= 2;
   repeat (k) {
     (fn, fn+1) = (fn+1, fn + fn+1);
