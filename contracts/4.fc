@@ -51,12 +51,31 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   }
 -}
   builder b = begin_cell();
-  repeat (string.slice_bits() >> 3) {
+  ;; repeat (string.slice_bits() / 64) {
+  ;;   int ch64 = string~load_uint(64);
+  ;;   int new_ch64 = 0;
+  ;;   int i = 7;
+  ;;   repeat (8) {
+  ;;     int ch = (ch64 >> (8 * i)) & 0xff;
+  ;;     if ((ch >= 97) & (ch <= 122)) {  ;; a-z
+  ;;       ch = ((ch - 97 + shift) % 26) + 97;
+  ;;     } elseif ((ch >= 65) & (ch <= 90)) {  ;; A-Z
+  ;;       ch = ((ch - 65 + shift) % 26) + 65;
+  ;;     }
+  ;;     new_ch64 = (new_ch64 << 8) | ch;
+  ;;     ;; ch = ch << (8 * i);
+  ;;     ;; ch64 = (ch64 & (~ (0xff << (8 * i)))) | ch;
+  ;;     i -= 1;
+  ;;   }
+  ;;   b = b.store_uint(new_ch64, 64);
+  ;; }
+
+  repeat (string.slice_bits() / 8) {
     int ch = string~load_uint(8);
-    if ((ch >= 97) & (ch <= 122)) {  ;; a-z
-      ch = ((ch - 97 + shift) % 26) + 97;
-    } elseif ((ch >= 65) & (ch <= 90)) {  ;; A-Z
+    if ((ch > 64) & (ch < 91)) {  ;; A-Z
       ch = ((ch - 65 + shift) % 26) + 65;
+    } elseif ((ch > 96) & (ch < 123)) {  ;; a-z
+      ch = ((ch - 97 + shift) % 26) + 97;
     }
     b = b.store_uint(ch, 8);
   }
