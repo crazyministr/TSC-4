@@ -109,14 +109,13 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       if (first_bit) {
         to_store_bit = 1;
       }
-      preb = preb.store_uint(to_store_bit, 1);
-      ;; if (preb.builder_bits() < 1023) {  ;; + 1 < 1024
-      ;;   preb = preb.store_uint(to_store_bit, 1);
-      ;; } else {
-      ;;   stack~tpush(preb);
-      ;;   stack_len += 1;
-      ;;   preb = begin_cell().store_uint(to_store_bit, 1);
-      ;; }
+      if (preb.builder_bits() < 1023) {  ;; + 1 < 1024
+        preb = preb.store_uint(to_store_bit, 1);
+      } else {
+        stack~tpush(preb);
+        stack_len += 1;
+        preb = begin_cell().store_uint(to_store_bit, 1);
+      }
 
       ;; int real_buffer_len = ubitsize(buffer);
       ;; if (real_buffer_len < flag_len) {
@@ -165,11 +164,12 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   if (cs.slice_refs()) {
     builder inner_b = rec(flag, flag_len, value, buffer, buffer_len, cs.preload_ref());
 
-    if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
-      preb = preb.store_builder(inner_b);
-    } else {
-      preb = preb._store_builder_ref(inner_b);
-    }
+    preb = preb._store_builder_ref(inner_b);
+    ;; if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
+    ;;   preb = preb.store_builder(inner_b);
+    ;; } else {
+    ;;   preb = preb._store_builder_ref(inner_b);
+    ;; }
   } elseif (buffer_len > 0) {
     if (preb.builder_bits() + buffer_len < 1024) {  ;; + 1 < 1024
       preb = preb.store_uint(buffer, buffer_len);
