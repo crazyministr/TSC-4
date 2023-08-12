@@ -104,9 +104,9 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     if (buffer_len == flag_len) {  ;; shift buffer
       int first_bit_pos = 1 << (buffer_len - 1);
       int first_bit = buffer & first_bit_pos;
+      buffer ^= first_bit;
       int to_store_bit = 0;
       if (first_bit) {
-        buffer ^= first_bit_pos;
         to_store_bit = 1;
       }
       if (preb.builder_bits() < 1023) {  ;; + 1 < 1024
@@ -144,17 +144,18 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
         preb = preb.store_uint(value, value_bits);
       } else {
         int bits_left = 1023 - preb.builder_bits();
-        if (bits_left == 0) {
-          stack~tpush(preb);
-          stack_len += 1;
-          preb = begin_cell().store_uint(value, value_bits);
-        } else {
+        if (bits_left) {
           int l = value_bits - bits_left;
           ;; preb = preb.store_uint(value >> l, bits_left);
           stack~tpush(preb.store_uint(value >> l, bits_left));
           stack_len += 1;
           preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
+        } else {
+          stack~tpush(preb);
+          stack_len += 1;
+          preb = begin_cell().store_uint(value, value_bits);
         }
+        ;; stack_len += 1;
       }
       (buffer, buffer_len) = (0, 0);
     }
@@ -179,7 +180,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     }
   }
 
-  stack~touch();
+  ;; stack~touch();
   repeat (stack_len) {
     builder parent = stack~pop_back();
     preb = parent._store_builder_ref(preb);

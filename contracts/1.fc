@@ -36,7 +36,7 @@ forall X -> int is_null?(X x) asm "ISNULL";
   tuple deque = null();
   deque = cons(tree, deque);
   
-  repeat (700) {
+  do {
     (tree, deque) = uncons(deque);
     if (cell_hash(tree) == hash) {
       return tree;
@@ -45,9 +45,6 @@ forall X -> int is_null?(X x) asm "ISNULL";
     repeat (node.slice_refs()) {
       deque = cons(node~load_ref(), deque);
     }
-    if (is_null?(deque)) {
-      return begin_cell().end_cell();
-    }
-  }
+  } until (is_null?(deque));
   return begin_cell().end_cell();
 }
