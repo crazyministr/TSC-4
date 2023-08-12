@@ -109,13 +109,14 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       if (first_bit) {
         to_store_bit = 1;
       }
-      if (preb.builder_bits() < 1023) {  ;; + 1 < 1024
-        preb = preb.store_uint(to_store_bit, 1);
-      } else {
-        stack~tpush(preb);
-        stack_len += 1;
-        preb = begin_cell().store_uint(to_store_bit, 1);
-      }
+      preb = preb.store_uint(to_store_bit, 1);
+      ;; if (preb.builder_bits() < 1023) {  ;; + 1 < 1024
+      ;;   preb = preb.store_uint(to_store_bit, 1);
+      ;; } else {
+      ;;   stack~tpush(preb);
+      ;;   stack_len += 1;
+      ;;   preb = begin_cell().store_uint(to_store_bit, 1);
+      ;; }
 
       ;; int real_buffer_len = ubitsize(buffer);
       ;; if (real_buffer_len < flag_len) {
