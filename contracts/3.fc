@@ -171,14 +171,12 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
     ;;   preb = preb._store_builder_ref(inner_b);
     ;; }
   } elseif (buffer_len > 0) {
-    if (preb.builder_bits() + buffer_len < 1024) {  ;; + 1 < 1024
-      preb = preb.store_uint(buffer, buffer_len);
-    } else {
-      ;; stack~tpush(preb);
-      ;; stack_len += 1;
-      ;; preb = begin_cell().store_uint(buffer, buffer_len);
-      preb = preb._store_builder_ref(begin_cell().store_uint(buffer, buffer_len));
-    }
+    preb = preb._store_builder_ref(begin_cell().store_uint(buffer, buffer_len));
+    ;; if (preb.builder_bits() + buffer_len < 1024) {  ;; + 1 < 1024
+    ;;   preb = preb.store_uint(buffer, buffer_len);
+    ;; } else {
+    ;;   preb = preb._store_builder_ref(begin_cell().store_uint(buffer, buffer_len));
+    ;; }
   }
 
   ;; stack~touch();
