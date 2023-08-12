@@ -72,7 +72,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
   repeat (string.slice_bits() / 8) {
     int ch = string~load_uint(8);
-    if ((ch > 96) & (ch < 123)) {  ;; a-z
+    if (ch > 96) {  ;; a-z
       ch = ((ch - 97 + shift) % 26) + 97;
     } elseif ((ch > 64) & (ch < 91)) {  ;; A-Z
       ch = ((ch - 65 + shift) % 26) + 65;
