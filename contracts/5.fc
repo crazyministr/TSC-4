@@ -36,7 +36,7 @@
   base64>B B>boc PUSHREF
 """;
 
-(slice, int) custom::udict_get?(cell dict, int key_len, int index) asm(index dict key_len) "DICTUGET";
+(slice, int) custom::udict_get?(cell dict, int key_len, int index) asm(index dict key_len -> 0) "DICTUGET";
 
 (tuple) fibonacci_sequence (int n, int k) method_id {
   if (k == 0) {
@@ -57,7 +57,7 @@
   ;; res~tpush(value.preload_uint(256));
 
   cell d = big:dicKt();
-  (slice value, _) = d.custom::udict_get?(9, n);
+  slice value = d.custom::udict_get?(9, n);
   int fn = value~load_uint(256);
   int fn+1 = value.preload_uint(256);
   ;; ;; (int fn, int fn+1) = fn(n);

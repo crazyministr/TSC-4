@@ -69,6 +69,7 @@ describe('Task5', () => {
             console.log(res.stack);
             fs.writeFileSync('vmlogs.log', res.logs as string)
             if (res) {
+                console.log('gasUsed', res.gasUsed)
                 return
             }
             } catch( e :any ) {

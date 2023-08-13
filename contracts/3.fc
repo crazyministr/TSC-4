@@ -142,22 +142,21 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
       if (preb.builder_bits() + value_bits < 1024) {
         preb = preb.store_uint(value, value_bits);
       } else {
-        int bits_left = 1023 - preb.builder_bits();
-        if (bits_left) {
-          int l = value_bits - bits_left;
-          ;; preb = preb.store_uint(value >> l, bits_left);
-          stack~tpush(preb.store_uint(value >> l, bits_left));
-          stack_len += 1;
-          preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
-        } else {
+        ;; int bits_left = 1023 - preb.builder_bits();
+        ;; if (bits_left) {
+        ;;   int l = value_bits - bits_left;
+        ;;   stack~tpush(preb.store_uint(value >> l, bits_left));
+        ;;   stack_len += 1;
+        ;;   preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
+        ;; } else {
           stack~tpush(preb);
           stack_len += 1;
           preb = begin_cell().store_uint(value, value_bits);
-        }
+        ;; }
       }
       (buffer, buffer_len) = (0, 0);
     }
-    ;; elseif (buffer_len == flag_len)
+    elseif (buffer_len == flag_len)
     {
 
       int prev = 0; int i = 0; int j = 0;
@@ -183,19 +182,18 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
         if (preb.builder_bits() + to_store_bits < 1024) {
           preb = preb.store_uint(to_store, to_store_bits);
         } else {
-          int bits_left = 1023 - preb.builder_bits();
-          if (bits_left) {
-            int l = to_store_bits - bits_left;
-            stack~tpush(preb.store_uint(to_store >> l, bits_left));
-            stack_len += 1;
-            preb = begin_cell().store_uint(to_store & ((1 << l) - 1), l);
-          } else {
+          ;; int bits_left = 1023 - preb.builder_bits();
+          ;; if (bits_left) {
+          ;;   int l = to_store_bits - bits_left;
+          ;;   stack~tpush(preb.store_uint(to_store >> l, bits_left));
+          ;;   stack_len += 1;
+          ;;   preb = begin_cell().store_uint(to_store & ((1 << l) - 1), l);
+          ;; } else {
             stack~tpush(preb);
             stack_len += 1;
             preb = begin_cell().store_uint(to_store, to_store_bits);
-          }
+          ;; }
         }
-
 
         buffer &= (1 << prev) - 1;
         buffer_len = prev;
@@ -233,12 +231,11 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
   int flag_len = ubitsize(flag);
 
-
   tuple kmp = empty_tuple();
   kmp~tpush(0);
-  int i = 1; int j = 0;
+  int i = 1; int j = 0; int prev = 0;
   repeat (flag_len - 1) {
-    j = kmp.back();
+    j = prev;
     while ((j > 0) & ( si_eq_sj(flag, flag_len - i - 1, flag, flag_len - j - 1) == 0 )) {
       j = kmp.at(j - 1);
     }
@@ -246,6 +243,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
       j += 1;
     }
     kmp~tpush(j);
+    prev = j;
     i += 1;
   }
   kmp~tpush(0);
