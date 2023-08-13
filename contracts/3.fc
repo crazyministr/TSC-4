@@ -87,8 +87,8 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   slice cs = llist.begin_parse();
 
   ;; read up to `flag_len - 1` bits
-  int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
-  if (bits_to_read) {
+  int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len - 1);
+  if (bits_to_read > 0) {
     buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
     buffer_len += bits_to_read;
   }
@@ -98,26 +98,6 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   builder preb = begin_cell();
   cs~touch();
   repeat (cs.slice_bits()) {
-    if (buffer == flag) {
-      int value_bits = ubitsize(value);
-      if (preb.builder_bits() + value_bits < 1024) {
-        preb = preb.store_uint(value, value_bits);
-      } else {
-        int bits_left = 1023 - preb.builder_bits();
-        if (bits_left) {
-          int l = value_bits - bits_left;
-          stack~tpush(preb.store_uint(value >> l, bits_left));
-          stack_len += 1;
-          preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
-        } else {
-          stack~tpush(preb);
-          stack_len += 1;
-          preb = begin_cell().store_uint(value, value_bits);
-        }
-      }
-      (buffer, buffer_len) = (0, 0);
-    }
-
     int bit = cs~load_uint(1);
 
     if (buffer_len == flag_len) {  ;; shift buffer
@@ -139,7 +119,6 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       buffer_len += 1;
     }
     buffer = (buffer << 1) | bit;
-  }
     if (buffer == flag) {
       int value_bits = ubitsize(value);
       if (preb.builder_bits() + value_bits < 1024) {
@@ -159,6 +138,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       }
       (buffer, buffer_len) = (0, 0);
     }
+  }
 
   if (cs.slice_refs()) {
     builder inner_b = rec(flag, flag_len, value, buffer, buffer_len, cs.preload_ref());
