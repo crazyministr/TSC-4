@@ -87,7 +87,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 int si_eq_sj(int s1, int i, int s2, int j) {
   int b1 = s1 & (1 << i);
   int b2 = s2 & (1 << j);
-  return ((s1 > 0) & (s2 > 0)) | ((s1 == 0) & (s2 == 0));
+  return ((b1 > 0) & (b2 > 0)) | ((b1 == 0) & (b2 == 0));
 }
 
 
