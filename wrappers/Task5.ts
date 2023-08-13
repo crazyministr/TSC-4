@@ -26,4 +26,31 @@ export class Task5 implements Contract {
             body: beginCell().endCell(),
         });
     }
+
+    async getfibonacci_sequence(provider: ContractProvider, n: bigint, k: bigint) {
+        return await provider.get('fibonacci_sequence', [{
+            type: 'int',
+            value: n
+        }, {
+            type: 'int',
+            value: k
+        }]
+
+        );
+    }
+
+    async getFibSedov(provider: ContractProvider, n: bigint, k: bigint) {
+        const r = (
+            await provider.get('fibonacci_sequence', [
+                { type: 'int', value: n as unknown as bigint },
+                { type: 'int', value: k as unknown as bigint },
+            ])
+        ).stack.readTuple();
+        const v = [];
+        const l = r.remaining;
+        for (let i = 0; i < l; i++) {
+            v.push(r.readBigNumber().toString());
+        }
+        return v;
+    }
 }
