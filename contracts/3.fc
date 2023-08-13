@@ -146,15 +146,15 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
     else  ;;if (buffer_len == flag_len)
     {
 
-      int j = buffer_len - bits_to_read; int i = j;
+      int j = buffer_len - bits_to_read; int i = buffer_len - j - 1;
       repeat (bits_to_read) {
-        while ((j > 0) & ( si_eq_sj(buffer, buffer_len - i - 1, flag, flag_len - j - 1) == 0 )) {
+        while ((j > 0) & ( si_eq_sj(buffer, i, flag, flag_len - j - 1) == 0 )) {
           j = kmp.at(j - 1);
         }
-        if ( si_eq_sj(buffer, buffer_len - i - 1, flag, flag_len - j - 1) ) {
+        if ( si_eq_sj(buffer, i, flag, flag_len - j - 1) ) {
           j += 1;
         }
-        i += 1;
+        i -= 1;
       }
       
       int to_store_bits = buffer_len - j;
