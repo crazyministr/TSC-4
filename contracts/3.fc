@@ -89,7 +89,6 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   ;; read up to `flag_len - 1` bits
   int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len - 1);
   if (bits_to_read > 0) {
-    ;; int val = ;
     buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
     buffer_len += bits_to_read;
   }
@@ -116,24 +115,6 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
         stack_len += 1;
         preb = begin_cell().store_uint(to_store_bit, 1);
       }
-
-      ;; int real_buffer_len = ubitsize(buffer);
-      ;; if (real_buffer_len < flag_len) {
-      ;;   int zeros_to_add = flag_len - real_buffer_len;
-      ;;   int bits_left = 1023 - preb.builder_bits();
-      ;;   if (bits_left >= zeros_to_add) {
-      ;;     preb = preb.store_uint(0, zeros_to_add);
-      ;;   } elseif (bits_left == 0) {
-      ;;     stack~tpush(preb);
-      ;;     stack_len += 1;
-      ;;     preb = begin_cell().store_uint(0, zeros_to_add);
-      ;;   } else {
-      ;;     stack~tpush(preb.store_uint(0, bits_left));
-      ;;     stack_len += 1;
-      ;;     preb = begin_cell().store_uint(0, zeros_to_add - bits_left);
-      ;;   }
-      ;;   buffer_len -= zeros_to_add;
-      ;; }
     } else {
       buffer_len += 1;
     }
@@ -143,19 +124,17 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
       if (preb.builder_bits() + value_bits < 1024) {
         preb = preb.store_uint(value, value_bits);
       } else {
-        int bits_left = 1023 - preb.builder_bits();
-        if (bits_left) {
-          int l = value_bits - bits_left;
-          ;; preb = preb.store_uint(value >> l, bits_left);
-          stack~tpush(preb.store_uint(value >> l, bits_left));
-          stack_len += 1;
-          preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
-        } else {
+        ;; int bits_left = 1023 - preb.builder_bits();
+        ;; if (bits_left) {
+        ;;   int l = value_bits - bits_left;
+        ;;   stack~tpush(preb.store_uint(value >> l, bits_left));
+        ;;   stack_len += 1;
+        ;;   preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
+        ;; } else {
           stack~tpush(preb);
           stack_len += 1;
           preb = begin_cell().store_uint(value, value_bits);
-        }
-        ;; stack_len += 1;
+        ;; }
       }
       (buffer, buffer_len) = (0, 0);
     }
