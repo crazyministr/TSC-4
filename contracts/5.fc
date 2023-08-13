@@ -42,40 +42,26 @@
   if (k == 0) {
     return empty_tuple();
   }
-  tuple res = empty_tuple();
   ;; if (n == 370) {
   ;;   res~tpush(94611056096305838013295371573764256526437182762229865607320618320601813254535);
   ;;   return res;
   ;; }
 
-  ;; cell d = big:dicKt();
-  ;; (slice value, _) = d.udict_get?(9, n);
-  ;; repeat (k - 1) {
-  ;;   res~tpush(value.preload_uint(256));
-  ;;   value = value.preload_ref().begin_parse();
-  ;; }
-  ;; res~tpush(value.preload_uint(256));
-
   cell d = big:dicKt();
   (slice value, _) = d.custom::udict_get?(9, n);
   int fn = value~load_uint(256);
   int fn+1 = value.preload_uint(256);
-  ;; ;; (int fn, int fn+1) = fn(n);
-
+  ;; (int fn, int fn+1) = fn(n);
+  tuple res = empty_tuple();
   res~tpush(fn);
   if (k == 1) {
     return res;
   }
-  ;; int fn+1 = value.preload_uint(256);
   res~tpush(fn+1);
-  ;; if (k == 2) {
-  ;;   return res;
-  ;; }
   k -= 2;
   repeat (k) {
     (fn, fn+1) = (fn+1, fn + fn+1);
     res~tpush(fn+1);
   };
   return res;
-
 }
