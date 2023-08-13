@@ -84,7 +84,7 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 const int CELL_LEN = 1023;
 
 
-(builder) rec(int flag, int flag_len, int value, int buffer, int buffer_len, cell llist) {
+(builder) rec(int flag, int flag_len, int value, int value_bits, int buffer, int buffer_len, cell llist) {
   slice cs = llist.begin_parse();
 
   ;; read up to `flag_len - 1` bits
@@ -121,7 +121,7 @@ const int CELL_LEN = 1023;
     }
     buffer = (buffer << 1) | bit;
     if (buffer == flag) {
-      int value_bits = ubitsize(value);
+      ;; int value_bits = ubitsize(value);
       if (preb.builder_bits() + value_bits < 1024) {
         preb = preb.store_uint(value, value_bits);
       } else {
@@ -142,14 +142,14 @@ const int CELL_LEN = 1023;
   }
 
   if (cs.slice_refs()) {
-    builder inner_b = rec(flag, flag_len, value, buffer, buffer_len, cs.preload_ref());
+    builder inner_b = rec(flag, flag_len, value, value_bits, buffer, buffer_len, cs.preload_ref());
 
-    ;; preb = preb._store_builder_ref(inner_b);
-    if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
-      preb = preb.store_builder(inner_b);
-    } else {
-      preb = preb._store_builder_ref(inner_b);
-    }
+    preb = preb._store_builder_ref(inner_b);
+    ;; if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
+    ;;   preb = preb.store_builder(inner_b);
+    ;; } else {
+    ;;   preb = preb._store_builder_ref(inner_b);
+    ;; }
   } elseif (buffer_len) {
     if (preb.builder_bits() + buffer_len < 1024) {
       preb = preb.store_uint(buffer, buffer_len);
@@ -173,8 +173,9 @@ const int CELL_LEN = 1023;
 ;; testable
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
   int flag_len = ubitsize(flag);
+  int value_len = ubitsize(value);
 
-  builder ans = rec(flag, flag_len, value, 0, 0, linked_list);
+  builder ans = rec(flag, flag_len, value, value_len, 0, 0, linked_list);
 
   return ans.end_cell();
 }
