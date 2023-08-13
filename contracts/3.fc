@@ -157,7 +157,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
       }
       (buffer, buffer_len) = (0, 0);
     }
-    elseif (buffer_len == flag_len)
+    ;; elseif (buffer_len == flag_len)
     {
 
       int prev = 0; int i = 0; int j = 0;
