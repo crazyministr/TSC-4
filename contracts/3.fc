@@ -128,13 +128,14 @@ const int CELL_LEN = 1023;
         if (bits_left) {
           int l = value_bits - bits_left;
           stack~tpush(preb.store_uint(value >> l, bits_left));
-          stack_len += 1;
+          ;; stack_len += 1;
           preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
         } else {
           stack~tpush(preb);
-          stack_len += 1;
+          ;; stack_len += 1;
           preb = begin_cell().store_uint(value, value_bits);
         }
+        stack_len += 1;
       }
       (buffer, buffer_len) = (0, 0);
     }
