@@ -107,7 +107,23 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
       buffer_len += bits_to_read;
     }
 
-    if (buffer == flag) {
+    int tmp_buffer = buffer;
+    int prev = buffer_len - bits_to_read; int i = prev; int j = 0;
+    repeat (bits_to_read) {
+      j = prev;
+
+      while ((j > 0) & ( si_eq_sj(buffer, buffer_len - i - 1, flag, flag_len - j - 1) == 0 )) {
+        j = kmp.at(j - 1);
+      }
+      if ( si_eq_sj(buffer, buffer_len - i - 1, flag, flag_len - j - 1) ) {
+        j += 1;
+      }
+
+      i += 1;
+      prev = j;
+    }
+
+    if (prev == flag_len) {
       int value_bits = ubitsize(value);
       if (preb.builder_bits() + value_bits < 1024) {
         preb = preb.store_uint(value, value_bits);
@@ -129,6 +145,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
     elseif (buffer_len == flag_len)
     {
 
+      {-
       int prev = 0; int i = 0; int j = 0;
       repeat (buffer_len) {
       ;; int prev = buffer_len - bits_to_read; int i = prev; int j = 0;
@@ -140,10 +157,11 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
       ;; repeat (bits_to_read) {
 
         if (i == buffer_len - bits_to_read) {
-          if (prev == buffer_len - bits_to_read) {
+          if (prev != buffer_len - bits_to_read) {
             return begin_cell();
           }
         }
+
         j = prev;
 
         while ((j > 0) & ( si_eq_sj(buffer, buffer_len - i - 1, flag, flag_len - j - 1) == 0 )) {
@@ -158,7 +176,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
       }
       ;; int lll = 123123;
       ;; lll~dump();
-
+      -}
       int to_store_bits = buffer_len - prev;
       ;; if (to_store_bits > 0)
       {
