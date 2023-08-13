@@ -99,6 +99,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
   builder preb = begin_cell();
 
   while (cs.slice_bits()) {
+    ;; buffer_len~dump();
     int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
     {
       int val = cs~load_uint(bits_to_read);
@@ -128,8 +129,11 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
     elseif (buffer_len == flag_len)
     {
 
-      int prev = buffer_len - bits_to_read;
-      int i = prev; int j = 0;
+      int prev = 0;
+      int i = 0; int j = 0;
+      ;; int prev = buffer_len - bits_to_read;
+      ;; int i = prev; int j = 0;
+      ;; prev~dump();
       repeat (bits_to_read) {
         j = prev;
 
@@ -145,6 +149,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
       }
 
       int to_store_bits = buffer_len - prev;
+      ;; to_store_bits~dump();
       {
         int to_store = buffer >> prev;
 
