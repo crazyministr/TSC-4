@@ -85,6 +85,7 @@ jobs:
                   echo "Points: $points"
               fi
           done
+          echo "Sanitized: $sanitized_response"
 
 
       - name: Set action status
