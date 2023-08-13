@@ -71,168 +71,112 @@ _ ~strdump_int(slice text, int value) impure {
             .end_cell().begin_parse();
     ~strdump_safe_not_pretty(text_extended);
 }
-
 -}
+
 () recv_internal() {
 }
 
 
 (int) ubitsize (int a) asm "UBITSIZE";
 forall X -> int is_null?(X x) asm "ISNULL";
-forall X -> X back(tuple) asm "LAST";
 forall X -> (tuple, X) ~pop_back(tuple t) asm "TPOP";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 
-int si_eq_sj(int s1, int i, int s2, int j) inline {
-  int b1 = s1 & (1 << i);
-  int b2 = s2 & (1 << j);
-  ;; return ((b1 > 0) & (b2 > 0)) | ((b1 == 0) & (b2 == 0));
-  return ((b1 > 0) & (b2 > 0)) | (b1 == b2);
-}
-
-
-(builder) rec(int flag, int flag_len, int value, int buffer, int buffer_len, tuple kmp, cell llist) {
+(builder) rec(int flag, int flag_len, int value, int buffer, int buffer_len, cell llist) {
   slice cs = llist.begin_parse();
+
+  ;; read up to `flag_len - 1` bits
+  int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len - 1);
+  if (bits_to_read > 0) {
+    ;; int val = ;
+    buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
+    buffer_len += bits_to_read;
+  }
 
   int stack_len = 0;
   tuple stack = empty_tuple();
   builder preb = begin_cell();
+  cs~touch();
+  repeat (cs.slice_bits()) {
+    int bit = cs~load_uint(1);
 
-  while (cs.slice_bits()) {
-    int bits_to_read = min(cs.slice_bits(), 256 - buffer_len);
-    buffer_len += bits_to_read;
-    buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
-
-    int j = buffer_len - bits_to_read;
-    int i = buffer_len - j - 1;
-    repeat (bits_to_read) {
-      while (j & ( si_eq_sj(buffer, i, flag, flag_len - j - 1) == 0 )) {
-        j = kmp.at(j - 1);
+    if (buffer_len == flag_len) {  ;; shift buffer
+      int first_bit_pos = 1 << (buffer_len - 1);
+      int first_bit = buffer & first_bit_pos;
+      buffer ^= first_bit;
+      int to_store_bit = 0;
+      if (first_bit) {
+        to_store_bit = 1;
+      }
+      if (preb.builder_bits() < 1023) {  ;; + 1 < 1024
+        preb = preb.store_uint(to_store_bit, 1);
+      } else {
+        stack~tpush(preb);
+        stack_len += 1;
+        preb = begin_cell().store_uint(to_store_bit, 1);
       }
 
-      if ( si_eq_sj(buffer, i, flag, flag_len - j - 1) ) {
-        j += 1;
-      }
-
-      if (j == flag_len) {  ;; place to replace
-        int old_bit_len = buffer_len - i;
-        int old_bit_no_flag_len = old_bit_len - flag_len;
-        if (old_bit_no_flag_len) {
-          int old_to_store = buffer >> (i + flag_len);
-          if (preb.builder_bits() + old_bit_no_flag_len < 1024) {
-            preb = preb.store_uint(old_to_store, old_bit_no_flag_len);
-          } else {
-            stack~tpush(preb);
-            stack_len += 1;
-            preb = begin_cell().store_uint(old_to_store, old_bit_no_flag_len);
-          }
-        }
-
-        int value_bits = ubitsize(value);
-        if (preb.builder_bits() + value_bits < 1024) {
-          preb = preb.store_uint(value, value_bits);
-        } else {
-          stack~tpush(preb);
-          stack_len += 1;
-          preb = begin_cell().store_uint(value, value_bits);
-        }
-
-        buffer &= (1 << i) - 1;
-        buffer_len -= old_bit_len;
-        j = 0;
-      }
-      i -= 1;
-    }
-
-    int to_store_bits = buffer_len - j;
-    int to_store = buffer >> j;
-    if (preb.builder_bits() + to_store_bits < 1024) {
-      preb = preb.store_uint(to_store, to_store_bits);
+      ;; int real_buffer_len = ubitsize(buffer);
+      ;; if (real_buffer_len < flag_len) {
+      ;;   int zeros_to_add = flag_len - real_buffer_len;
+      ;;   int bits_left = 1023 - preb.builder_bits();
+      ;;   if (bits_left >= zeros_to_add) {
+      ;;     preb = preb.store_uint(0, zeros_to_add);
+      ;;   } elseif (bits_left == 0) {
+      ;;     stack~tpush(preb);
+      ;;     stack_len += 1;
+      ;;     preb = begin_cell().store_uint(0, zeros_to_add);
+      ;;   } else {
+      ;;     stack~tpush(preb.store_uint(0, bits_left));
+      ;;     stack_len += 1;
+      ;;     preb = begin_cell().store_uint(0, zeros_to_add - bits_left);
+      ;;   }
+      ;;   buffer_len -= zeros_to_add;
+      ;; }
     } else {
-      stack~tpush(preb);
-      stack_len += 1;
-      preb = begin_cell().store_uint(to_store, to_store_bits);
+      buffer_len += 1;
     }
-    buffer &= (1 << j) - 1;
-    buffer_len = j;
-
-    {-
+    buffer = (buffer << 1) | bit;
     if (buffer == flag) {
       int value_bits = ubitsize(value);
       if (preb.builder_bits() + value_bits < 1024) {
         preb = preb.store_uint(value, value_bits);
       } else {
-        ;; int bits_left = 1023 - preb.builder_bits();
-        ;; if (bits_left) {
-        ;;   int l = value_bits - bits_left;
-        ;;   stack~tpush(preb.store_uint(value >> l, bits_left));
-        ;;   stack_len += 1;
-        ;;   preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
-        ;; } else {
+        int bits_left = 1023 - preb.builder_bits();
+        if (bits_left) {
+          int l = value_bits - bits_left;
+          ;; preb = preb.store_uint(value >> l, bits_left);
+          stack~tpush(preb.store_uint(value >> l, bits_left));
+          stack_len += 1;
+          preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
+        } else {
           stack~tpush(preb);
           stack_len += 1;
           preb = begin_cell().store_uint(value, value_bits);
-        ;; }
+        }
+        ;; stack_len += 1;
       }
       (buffer, buffer_len) = (0, 0);
     }
-    else  ;;if (buffer_len == flag_len)
-    {
-
-      int j = buffer_len - bits_to_read;
-      int i = buffer_len - j - 1;
-      repeat (bits_to_read) {
-        while (j & ( si_eq_sj(buffer, i, flag, flag_len - j - 1) == 0 )) {
-          j = kmp.at(j - 1);
-        }
-        if ( si_eq_sj(buffer, i, flag, flag_len - j - 1) ) {
-          j += 1;
-        }
-        i -= 1;
-      }
-
-      int to_store_bits = buffer_len - j;
-      ;; if (to_store_bits > 0)
-      {
-        int to_store = buffer >> j;
-
-        if (preb.builder_bits() + to_store_bits < 1024) {
-          preb = preb.store_uint(to_store, to_store_bits);
-        } else {
-          ;; int bits_left = 1023 - preb.builder_bits();
-          ;; if (bits_left) {
-          ;;   int l = to_store_bits - bits_left;
-          ;;   stack~tpush(preb.store_uint(to_store >> l, bits_left));
-          ;;   stack_len += 1;
-          ;;   preb = begin_cell().store_uint(to_store & ((1 << l) - 1), l);
-          ;; } else {
-            stack~tpush(preb);
-            stack_len += 1;
-            preb = begin_cell().store_uint(to_store, to_store_bits);
-          ;; }
-        }
-
-        buffer &= (1 << j) - 1;
-        buffer_len = j;
-      }
-    }
-    -}
   }
 
   if (cs.slice_refs()) {
-    builder inner_b = rec(flag, flag_len, value, buffer, buffer_len, kmp, cs.preload_ref());
+    builder inner_b = rec(flag, flag_len, value, buffer, buffer_len, cs.preload_ref());
 
-    ;; preb = preb._store_builder_ref(inner_b);
-    if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
-      preb = preb.store_builder(inner_b);
-    } else {
-      preb = preb._store_builder_ref(inner_b);
-    }
-  } elseif (buffer_len) {
+    preb = preb._store_builder_ref(inner_b);
+    ;; if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
+    ;;   preb = preb.store_builder(inner_b);
+    ;; } else {
+    ;;   preb = preb._store_builder_ref(inner_b);
+    ;; }
+  } elseif (buffer_len > 0) {
     if (preb.builder_bits() + buffer_len < 1024) {  ;; + 1 < 1024
       preb = preb.store_uint(buffer, buffer_len);
     } else {
+      ;; stack~tpush(preb);
+      ;; stack_len += 1;
+      ;; preb = begin_cell().store_uint(buffer, buffer_len);
       preb = preb._store_builder_ref(begin_cell().store_uint(buffer, buffer_len));
     }
   }
@@ -250,24 +194,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
   int flag_len = ubitsize(flag);
 
-  tuple kmp = empty_tuple();
-  kmp~tpush(0);
-  int i = flag_len - 2; int j = 0; ;;int prev = 0;
-  repeat (flag_len - 1) {
-    ;; j = prev;
-    while (j & ( si_eq_sj(flag, i, flag, flag_len - j - 1) == 0 )) {
-      j = kmp.at(j - 1);
-    }
-    if ( si_eq_sj(flag, i, flag, flag_len - j - 1) ) {
-      j += 1;
-    }
-    kmp~tpush(j);
-    ;; prev = j;
-    i -= 1;
-  }
-  ;; kmp~tpush(0);
-
-  builder ans = rec(flag, flag_len, value, 0, 0, kmp, linked_list);
+  builder ans = rec(flag, flag_len, value, 0, 0, linked_list);
 
   return ans.end_cell();
 }
