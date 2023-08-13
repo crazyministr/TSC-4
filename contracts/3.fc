@@ -91,7 +91,7 @@ int si_eq_sj(int s1, int i, int s2, int j) {
 }
 
 
-(builder) rec(int flag, int flag_len, int value, int buffer, int buffer_len, cell llist) {
+(builder) rec(tuple kmp, int flag, int flag_len, int value, int buffer, int buffer_len, cell llist) {
   slice cs = llist.begin_parse();
 
   ;; read up to `flag_len - 1` bits
@@ -166,26 +166,8 @@ int si_eq_sj(int s1, int i, int s2, int j) {
       }
       (buffer, buffer_len) = (0, 0);
     } elseif (buffer_len == flag_len) {
-      tuple kmp = empty_tuple();
-      kmp~tpush(0);
-      int i = 1; int j = 0;
-      repeat (flag_len - 1) {
-        j = kmp.back();
-        ;; ~strdump_int("before while. j = ", j);
-        while ((j > 0) & ( si_eq_sj(flag, flag_len - i - 1, flag, flag_len - j - 1) == 0 )) {
-          ;; ~strdump_int("dec j in while = ", j);
-          j = kmp.at(j - 1);
-        }
-        if ( si_eq_sj(flag, flag_len - i - 1, flag, flag_len - j - 1) ) {
-          j += 1;
-          ;; ~strdump_int("j + 1 after while", j);
-        }
-        kmp~tpush(j);
-        i += 1;
-      }
-      ;; kmp~dump();
-      kmp~tpush(0); i += 1;
-      int prev = 0; i = 0;
+
+      int prev = 0; int i = 0; int j = 0;
       repeat (buffer_len) {
         j = prev;
 
@@ -196,12 +178,14 @@ int si_eq_sj(int s1, int i, int s2, int j) {
           j += 1;
         }
 
+        i += 1;
         prev = j;
       }
 
       ;; ~strdump_int("prev", prev);
       int to_store_bits = buffer_len - prev;
-      if (to_store_bits > 0) {
+      ;; if (to_store_bits > 0)
+      {
         int to_store = buffer >> prev;
 
         if (preb.builder_bits() + to_store_bits < 1024) {
@@ -228,7 +212,7 @@ int si_eq_sj(int s1, int i, int s2, int j) {
   }
 
   if (cs.slice_refs()) {
-    builder inner_b = rec(flag, flag_len, value, buffer, buffer_len, cs.preload_ref());
+    builder inner_b = rec(kmp, flag, flag_len, value, buffer, buffer_len, cs.preload_ref());
 
     ;; preb = preb._store_builder_ref(inner_b);
     if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
@@ -257,7 +241,28 @@ int si_eq_sj(int s1, int i, int s2, int j) {
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
   int flag_len = ubitsize(flag);
 
-  builder ans = rec(flag, flag_len, value, 0, 0, linked_list);
+
+  tuple kmp = empty_tuple();
+  kmp~tpush(0);
+  int i = 1; int j = 0;
+  repeat (flag_len - 1) {
+    j = kmp.back();
+    ;; ~strdump_int("before while. j = ", j);
+    while ((j > 0) & ( si_eq_sj(flag, flag_len - i - 1, flag, flag_len - j - 1) == 0 )) {
+      ;; ~strdump_int("dec j in while = ", j);
+      j = kmp.at(j - 1);
+    }
+    if ( si_eq_sj(flag, flag_len - i - 1, flag, flag_len - j - 1) ) {
+      j += 1;
+      ;; ~strdump_int("j + 1 after while", j);
+    }
+    kmp~tpush(j);
+    i += 1;
+  }
+  ;; kmp~dump();
+  kmp~tpush(0);
+
+  builder ans = rec(kmp, flag, flag_len, value, 0, 0, linked_list);
 
   return ans.end_cell();
 }
