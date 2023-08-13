@@ -302,12 +302,10 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
 ;; testable
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
   int flag_len = ubitsize(flag);
-  if (flag_len < 33) {
+  if (flag_len < 64) {
     int value_len = ubitsize(value);
     builder ans = rec::small::flag(flag, flag_len, value, value_len, 0, 0, linked_list);
     return ans.end_cell();
-  } else {
-    return linked_list;
   }
 
   tuple kmp = empty_tuple();
