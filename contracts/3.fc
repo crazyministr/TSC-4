@@ -112,17 +112,17 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
       if (preb.builder_bits() + value_bits < 1024) {
         preb = preb.store_uint(value, value_bits);
       } else {
-        int bits_left = 1023 - preb.builder_bits();
-        if (bits_left) {
-          int l = value_bits - bits_left;
-          stack~tpush(preb.store_uint(value >> l, bits_left));
-          stack_len += 1;
-          preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
-        } else {
+        ;; int bits_left = 1023 - preb.builder_bits();
+        ;; if (bits_left) {
+        ;;   int l = value_bits - bits_left;
+        ;;   stack~tpush(preb.store_uint(value >> l, bits_left));
+        ;;   stack_len += 1;
+        ;;   preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
+        ;; } else {
           stack~tpush(preb);
           stack_len += 1;
           preb = begin_cell().store_uint(value, value_bits);
-        }
+        ;; }
       }
       (buffer, buffer_len) = (0, 0);
     }
@@ -156,17 +156,17 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
         if (preb.builder_bits() + to_store_bits < 1024) {
           preb = preb.store_uint(to_store, to_store_bits);
         } else {
-          int bits_left = 1023 - preb.builder_bits();
-          if (bits_left) {
-            int l = to_store_bits - bits_left;
-            stack~tpush(preb.store_uint(to_store >> l, bits_left));
-            stack_len += 1;
-            preb = begin_cell().store_uint(to_store & ((1 << l) - 1), l);
-          } else {
+          ;; int bits_left = 1023 - preb.builder_bits();
+          ;; if (bits_left) {
+          ;;   int l = to_store_bits - bits_left;
+          ;;   stack~tpush(preb.store_uint(to_store >> l, bits_left));
+          ;;   stack_len += 1;
+          ;;   preb = begin_cell().store_uint(to_store & ((1 << l) - 1), l);
+          ;; } else {
             stack~tpush(preb);
             stack_len += 1;
             preb = begin_cell().store_uint(to_store, to_store_bits);
-          }
+          ;; }
         }
 
         buffer &= (1 << prev) - 1;
