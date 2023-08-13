@@ -100,10 +100,64 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
   builder preb = begin_cell();
 
   while (cs.slice_bits()) {
-    int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
+    int bits_to_read = min(cs.slice_bits(), 256 - buffer_len);
     buffer_len += bits_to_read;
     buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
 
+    int j = buffer_len - bits_to_read;
+    int i = buffer_len - j - 1;
+    repeat (bits_to_read) {
+      while (j & ( si_eq_sj(buffer, i, flag, flag_len - j - 1) == 0 )) {
+        j = kmp.at(j - 1);
+      }
+
+      if ( si_eq_sj(buffer, i, flag, flag_len - j - 1) ) {
+        j += 1;
+      }
+
+      if (j == flag_len) {  ;; place to replace
+        int old_bit_len = buffer_len - i;
+        int old_bit_no_flag_len = old_bit_len - flag_len;
+        if (old_bit_no_flag_len) {
+          int old_to_store = buffer >> (i + flag_len);
+          if (preb.builder_bits() + old_bit_no_flag_len < 1024) {
+            preb = preb.store_uint(old_to_store, old_bit_no_flag_len);
+          } else {
+            stack~tpush(preb);
+            stack_len += 1;
+            preb = begin_cell().store_uint(old_to_store, old_bit_no_flag_len);
+          }
+        }
+
+        int value_bits = ubitsize(value);
+        if (preb.builder_bits() + value_bits < 1024) {
+          preb = preb.store_uint(value, value_bits);
+        } else {
+          stack~tpush(preb);
+          stack_len += 1;
+          preb = begin_cell().store_uint(value, value_bits);
+        }
+
+        buffer &= (1 << i) - 1;
+        buffer_len -= old_bit_len;
+        j = 0;
+      }
+      i -= 1;
+    }
+
+    int to_store_bits = buffer_len - j;
+    int to_store = buffer >> j;
+    if (preb.builder_bits() + to_store_bits < 1024) {
+      preb = preb.store_uint(to_store, to_store_bits);
+    } else {
+      stack~tpush(preb);
+      stack_len += 1;
+      preb = begin_cell().store_uint(to_store, to_store_bits);
+    }
+    buffer &= (1 << j) - 1;
+    buffer_len = j;
+
+    {-
     if (buffer == flag) {
       int value_bits = ubitsize(value);
       if (preb.builder_bits() + value_bits < 1024) {
@@ -137,7 +191,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
         }
         i -= 1;
       }
-      
+
       int to_store_bits = buffer_len - j;
       ;; if (to_store_bits > 0)
       {
@@ -163,6 +217,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
         buffer_len = j;
       }
     }
+    -}
   }
 
   if (cs.slice_refs()) {
