@@ -94,14 +94,6 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
 (builder) rec(tuple kmp, int flag, int flag_len, int value, int buffer, int buffer_len, cell llist) {
   slice cs = llist.begin_parse();
 
-  ;; read up to `flag_len - 1` bits
-  ;; int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len - 1);
-  ;; if (bits_to_read > 0) {
-  ;;   int val = cs~load_uint(bits_to_read);
-  ;;   buffer = (buffer << bits_to_read) | val;
-  ;;   buffer_len += bits_to_read;
-  ;; }
-
   int stack_len = 0;
   tuple stack = empty_tuple();
   builder preb = begin_cell();
@@ -109,7 +101,6 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
   while (cs.slice_bits()) {
     int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
     ;; if (bits_to_read > 0)
-    int oldblen = buffer_len;
     {
       int val = cs~load_uint(bits_to_read);
       buffer = (buffer << bits_to_read) | val;
@@ -140,7 +131,12 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
 
       ;; int prev = 0; int i = 0; int j = 0;
       ;; repeat (buffer_len) {
-      int prev = oldblen; int i = prev; int j = 0;
+      ;; int prev = buffer_len - bits_to_read; int i = prev; int j = 0;
+      ;; repeat (bits_to_read) {
+
+      int prev = buffer_len - bits_to_read;
+      int i = buffer_len - bits_to_read;
+      int j = 0;
       repeat (bits_to_read) {
         j = prev;
 
@@ -150,10 +146,12 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
         if ( si_eq_sj(buffer, buffer_len - i - 1, flag, flag_len - j - 1) ) {
           j += 1;
         }
-
+        ;; j~dump();
         i += 1;
         prev = j;
       }
+      ;; int lll = 123123;
+      ;; lll~dump();
 
       int to_store_bits = buffer_len - prev;
       ;; if (to_store_bits > 0)
@@ -178,6 +176,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
 
         buffer &= (1 << prev) - 1;
         buffer_len = prev;
+        ;; buffer~dump(); buffer_len~dump();
       }
     }
   }
@@ -216,7 +215,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
   kmp~tpush(0);
   int i = 1; int j = 0; int prev = 0;
   repeat (flag_len - 1) {
-    j = prev;
+    ;; j = prev;
     while ((j > 0) & ( si_eq_sj(flag, flag_len - i - 1, flag, flag_len - j - 1) == 0 )) {
       j = kmp.at(j - 1);
     }
@@ -224,7 +223,7 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
       j += 1;
     }
     kmp~tpush(j);
-    prev = j;
+    ;; prev = j;
     i += 1;
   }
   kmp~tpush(0);
