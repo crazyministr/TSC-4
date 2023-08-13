@@ -94,73 +94,43 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
 (builder) rec(tuple kmp, int flag, int flag_len, int value, int buffer, int buffer_len, cell llist) {
   slice cs = llist.begin_parse();
 
-  ;; read up to `flag_len - 1` bits
-  ;; int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len - 1);
-  ;; if (bits_to_read > 0) {
-  ;;   int val = cs~load_uint(bits_to_read);
-  ;;   buffer = (buffer << bits_to_read) | val;
-  ;;   buffer_len += bits_to_read;
-  ;; }
-
   int stack_len = 0;
   tuple stack = empty_tuple();
   builder preb = begin_cell();
 
   while (cs.slice_bits()) {
     int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
-    ;; if (bits_to_read > 0)
     {
       int val = cs~load_uint(bits_to_read);
       buffer = (buffer << bits_to_read) | val;
       buffer_len += bits_to_read;
     }
 
-    ;; int bit = cs~load_uint(1);
-
-    ;; if (buffer_len == flag_len) {  ;; shift buffer
-    ;;   int first_bit_pos = 1 << (buffer_len - 1);
-    ;;   int first_bit = buffer & first_bit_pos;
-    ;;   buffer ^= first_bit;
-    ;;   int to_store_bit = 0;
-    ;;   if (first_bit) {
-    ;;     to_store_bit = 1;
-    ;;   }
-    ;;   if (preb.builder_bits() < 1023) {  ;; + 1 < 1024
-    ;;     preb = preb.store_uint(to_store_bit, 1);
-    ;;   } else {
-    ;;     stack~tpush(preb);
-    ;;     stack_len += 1;
-    ;;     preb = begin_cell().store_uint(to_store_bit, 1);
-    ;;   }
-
-    ;; } else {
-    ;;   buffer_len += 1;
-    ;; }
-    ;; buffer = (buffer << 1) | bit;
     if (buffer == flag) {
       int value_bits = ubitsize(value);
       if (preb.builder_bits() + value_bits < 1024) {
         preb = preb.store_uint(value, value_bits);
       } else {
-        ;; int bits_left = 1023 - preb.builder_bits();
-        ;; if (bits_left) {
-        ;;   int l = value_bits - bits_left;
-        ;;   stack~tpush(preb.store_uint(value >> l, bits_left));
-        ;;   stack_len += 1;
-        ;;   preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
-        ;; } else {
+        int bits_left = 1023 - preb.builder_bits();
+        if (bits_left) {
+          int l = value_bits - bits_left;
+          stack~tpush(preb.store_uint(value >> l, bits_left));
+          stack_len += 1;
+          preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
+        } else {
           stack~tpush(preb);
           stack_len += 1;
           preb = begin_cell().store_uint(value, value_bits);
-        ;; }
+        }
       }
       (buffer, buffer_len) = (0, 0);
     }
     elseif (buffer_len == flag_len)
     {
 
-      int prev = 0; int i = 0; int j = 0;
-      repeat (buffer_len) {
+      int prev = buffer_len - bits_to_read;
+      int i = prev; int j = 0;
+      repeat (bits_to_read) {
         j = prev;
 
         while ((j > 0) & ( si_eq_sj(buffer, buffer_len - i - 1, flag, flag_len - j - 1) == 0 )) {
@@ -175,24 +145,23 @@ int si_eq_sj(int s1, int i, int s2, int j) inline {
       }
 
       int to_store_bits = buffer_len - prev;
-      ;; if (to_store_bits > 0)
       {
         int to_store = buffer >> prev;
 
         if (preb.builder_bits() + to_store_bits < 1024) {
           preb = preb.store_uint(to_store, to_store_bits);
         } else {
-          ;; int bits_left = 1023 - preb.builder_bits();
-          ;; if (bits_left) {
-          ;;   int l = to_store_bits - bits_left;
-          ;;   stack~tpush(preb.store_uint(to_store >> l, bits_left));
-          ;;   stack_len += 1;
-          ;;   preb = begin_cell().store_uint(to_store & ((1 << l) - 1), l);
-          ;; } else {
+          int bits_left = 1023 - preb.builder_bits();
+          if (bits_left) {
+            int l = to_store_bits - bits_left;
+            stack~tpush(preb.store_uint(to_store >> l, bits_left));
+            stack_len += 1;
+            preb = begin_cell().store_uint(to_store & ((1 << l) - 1), l);
+          } else {
             stack~tpush(preb);
             stack_len += 1;
             preb = begin_cell().store_uint(to_store, to_store_bits);
-          ;; }
+          }
         }
 
         buffer &= (1 << prev) - 1;
