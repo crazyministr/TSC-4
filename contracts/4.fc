@@ -13,79 +13,10 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 
 (builder) rec(tuple t, slice string) {
-  {-
-  int n = 0;
-  tuple stack = null();
   builder b = begin_cell();
-  do {
-    
-    repeat (string.slice_bits() >> 3) {
-      int ch = string~load_uint(8);
-      if ((ch >= 97) & (ch <= 122)) {  ;; a-z
-        ch = ((ch - 97 + shift) % 26) + 97;
-      } elseif ((ch >= 65) & (ch <= 90)) {  ;; A-Z
-        ch = ((ch - 65 + shift) % 26) + 65;
-      }
-      if (b.builder_bits() + 8 < 1024) {
-        b = b.store_uint(ch, 8);
-      } else {
-        stack = cons(b, stack);
-        n += 1;
-        b = begin_cell().store_uint(ch, 8);
-      }
-      
-    }
-
-    int f = -1;
-    if (string.slice_refs()) {
-      string = string.preload_ref().begin_parse();
-    } else {
-      f = 0;
-    }
-
-  } until (~ f);
-
-  repeat (n) {
-    (builder p, stack) = uncons(stack);
-    b = p._store_builder_ref(b);
-  }
--}
-  builder b = begin_cell();
-  ;; repeat (string.slice_bits() / 64) {
-  ;;   int ch64 = string~load_uint(64);
-  ;;   int new_ch64 = 0;
-  ;;   int i = 7;
-  ;;   repeat (8) {
-  ;;     int ch = (ch64 >> (8 * i)) & 0xff;
-  ;;     if ((ch >= 97) & (ch <= 122)) {  ;; a-z
-  ;;       ch = ((ch - 97 + shift) % 26) + 97;
-  ;;     } elseif ((ch >= 65) & (ch <= 90)) {  ;; A-Z
-  ;;       ch = ((ch - 65 + shift) % 26) + 65;
-  ;;     }
-  ;;     new_ch64 = (new_ch64 << 8) | ch;
-  ;;     ;; ch = ch << (8 * i);
-  ;;     ;; ch64 = (ch64 & (~ (0xff << (8 * i)))) | ch;
-  ;;     i -= 1;
-  ;;   }
-  ;;   b = b.store_uint(new_ch64, 64);
-  ;; }
 
   repeat (string.slice_bits() / 8) {
     int ch = string~load_uint(8);
-    ;; ch~dump();
-    ;; int tt = t.at(ch);
-    ;; tt~dump();
-    ;; int num = (ch - 1) & 31;
-    ;; if ((num < 26) & (ch > 64) & (ch < 123)) {
-    ;;   ch += ((num + shift) % 26) - num;
-    ;; }
-    ;; if ((ch > 96) & (ch < 123)) {  ;; a-z
-    ;; ;; if (ch ^ 96 < 27) {  ;; a-z
-    ;;   ch = ((ch - 97 + shift) % 26) + 97;
-    ;; } elseif (ch ^ 64 < 27) {  ;; A-Z
-    ;; ;; ;; ;; } elseif ((ch > 64) & (ch < 91)) {  ;; A-Z
-    ;;   ch = ((ch - 65 + shift) % 26) + 65;
-    ;; }
     b = b.store_uint(t.at(ch), 8);
   }
 
@@ -97,26 +28,18 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   return b;
 }
 
+forall X -> (tuple) to_tuple (X x) asm "NOP";
+
 ;; testable
 (cell) caesar_cipher_encrypt(int shift, cell text) method_id {
-  tuple t = empty_tuple();
-  int i = 0;
-  repeat (65) { t~tpush(i); i += 1;}
+  tuple t = to_tuple([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+  int i = 15;
+  repeat (50) { t~tpush(i); i += 1;}
   repeat (26) { t~tpush(((i - 65 + shift) % 26) + 65); i += 1; }
   repeat (6) { t~tpush(i); i += 1; }
   repeat (26) { t~tpush(((i - 97 + shift) % 26) + 97); i += 1; }
   repeat (95) { t~tpush(i); i += 1; }
 
-  ;; repeat (250) {
-  ;;   int ch = i;
-  ;;   if ((ch > 96) & (ch < 123)) {  ;; a-z
-  ;;     ch = ((ch - 97 + shift) % 26) + 97;
-  ;;   } elseif ((ch > 64) & (ch < 91)) {  ;; A-Z
-  ;;     ch = ((ch - 65 + shift) % 26) + 65;
-  ;;   }
-  ;;   t~tpush(ch);
-  ;;   i += 1;
-  ;; }
   slice string = text.begin_parse();
   string~skip_bits(32);
   return begin_cell()
@@ -127,9 +50,9 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 ;; testable
 (cell) caesar_cipher_decrypt(int shift, cell text) method_id {
-  tuple t = empty_tuple();
-  int i = 0;
-  repeat (65) { t~tpush(i); i += 1;}
+  tuple t = to_tuple([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+  int i = 15;
+  repeat (50) { t~tpush(i); i += 1;}
   repeat (26) { t~tpush(((i - 65 - shift) % 26) + 65); i += 1; }
   repeat (6) { t~tpush(i); i += 1; }
   repeat (26) { t~tpush(((i - 97 - shift) % 26) + 97); i += 1; }
