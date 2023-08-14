@@ -14,12 +14,10 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 (builder) rec(tuple t, slice string) {
   builder b = begin_cell();
-
   repeat (string.slice_bits() / 8) {
     int ch = string~load_uint(8);
     b = b.store_uint(t.at(ch), 8);
   }
-
   if (string.slice_refs()) {
     builder res = rec(t, string.preload_ref().begin_parse());
     return b._store_builder_ref(res);
@@ -51,12 +49,15 @@ forall X -> (tuple) to_tuple (X x) asm "NOP";
 ;; testable
 (cell) caesar_cipher_decrypt(int shift, cell text) method_id {
   tuple t = to_tuple([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
-  int i = 15;
-  repeat (50) { t~tpush(i); i += 1;}
+  t~tpush(15); t~tpush(16); t~tpush(17); t~tpush(18); t~tpush(19); t~tpush(20); t~tpush(21); t~tpush(22); t~tpush(23); t~tpush(24); t~tpush(25); t~tpush(26); t~tpush(27); t~tpush(28); t~tpush(29); t~tpush(30); t~tpush(31); t~tpush(32); t~tpush(33); t~tpush(34); t~tpush(35); t~tpush(36); t~tpush(37); t~tpush(38); t~tpush(39); t~tpush(40); t~tpush(41); t~tpush(42); t~tpush(43); t~tpush(44); t~tpush(45); t~tpush(46); t~tpush(47); t~tpush(48); t~tpush(49); t~tpush(50); t~tpush(51); t~tpush(52); t~tpush(53); t~tpush(54); t~tpush(55); t~tpush(56); t~tpush(57); t~tpush(58); t~tpush(59); t~tpush(60); t~tpush(61); t~tpush(62); t~tpush(63); t~tpush(64);
+  int i = 65;
   repeat (26) { t~tpush(((i - 65 - shift) % 26) + 65); i += 1; }
-  repeat (6) { t~tpush(i); i += 1; }
+  ;; repeat (6) { t~tpush(i); i += 1; }
+  t~tpush(91); t~tpush(92); t~tpush(93); t~tpush(94); t~tpush(95); t~tpush(96);
+  i = 97;
   repeat (26) { t~tpush(((i - 97 - shift) % 26) + 97); i += 1; }
-  repeat (95) { t~tpush(i); i += 1; }
+  t~tpush(97); t~tpush(98); t~tpush(99); t~tpush(100); t~tpush(101); t~tpush(102); t~tpush(103); t~tpush(104); t~tpush(105); t~tpush(106); t~tpush(107); t~tpush(108); t~tpush(109); t~tpush(110); t~tpush(111); t~tpush(112); t~tpush(113); t~tpush(114); t~tpush(115); t~tpush(116); t~tpush(117); t~tpush(118); t~tpush(119); t~tpush(120); t~tpush(121);
+  ;; repeat (95) { t~tpush(i); i += 1; }
   slice string = text.begin_parse();
   string~skip_bits(32);
   return begin_cell()
