@@ -16,7 +16,8 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
   builder res = begin_cell();
   repeat (string.slice_bits() / 32) {
     (int a, int b, int c, int d) = (string~load_uint(8), string~load_uint(8), string~load_uint(8), string~load_uint(8));
-    res~store_uint((((((t.at(a) << 8) | t.at(b)) << 8) | t.at(c)) << 8) | t.at(d), 32);
+    ;; res~store_uint((((((t.at(a) << 8) | t.at(b)) << 8) | t.at(c)) << 8) | t.at(d), 32);
+    res = res.store_uint(t.at(a), 8).store_uint(t.at(b), 8).store_uint(t.at(c), 8).store_uint(t.at(d), 8);
   }
   repeat (string.slice_bits() / 8) {
     int ch = string~load_uint(8);
