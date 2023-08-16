@@ -13,17 +13,21 @@ builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 
 
 (builder) rec(tuple t, slice string) {
-  builder b = begin_cell();
+  builder res = begin_cell();
+  repeat (string.slice_bits() / 32) {
+    (int a, int b, int c, int d) = (string~load_uint(8), string~load_uint(8), string~load_uint(8), string~load_uint(8));
+    res~store_uint((((((t.at(a) << 8) | t.at(b)) << 8) | t.at(c)) << 8) | t.at(d), 32);
+  }
   repeat (string.slice_bits() / 8) {
     int ch = string~load_uint(8);
-    b = b.store_uint(t.at(ch), 8);
+    res = res.store_uint(t.at(ch), 8);
   }
   if (string.slice_refs()) {
-    builder res = rec(t, string.preload_ref().begin_parse());
-    return b._store_builder_ref(res);
+    builder inner_res = rec(t, string.preload_ref().begin_parse());
+    return res._store_builder_ref(inner_res);
   }
 
-  return b;
+  return res;
 }
 
 forall X -> (tuple) to_tuple (X x) asm "NOP";
@@ -54,12 +58,11 @@ forall X -> (tuple) to_tuple (X x) asm "NOP";
 (cell) caesar_cipher_decrypt(int shift, cell text) method_id {
   tuple t = to_tuple([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
   t~tpush(15); t~tpush(16); t~tpush(17); t~tpush(18); t~tpush(19); t~tpush(20); t~tpush(21); t~tpush(22); t~tpush(23); t~tpush(24); t~tpush(25); t~tpush(26); t~tpush(27); t~tpush(28); t~tpush(29); t~tpush(30); t~tpush(31); t~tpush(32); t~tpush(33); t~tpush(34); t~tpush(35); t~tpush(36); t~tpush(37); t~tpush(38); t~tpush(39); t~tpush(40); t~tpush(41); t~tpush(42); t~tpush(43); t~tpush(44); t~tpush(45); t~tpush(46); t~tpush(47); t~tpush(48); t~tpush(49); t~tpush(50); t~tpush(51); t~tpush(52); t~tpush(53); t~tpush(54); t~tpush(55); t~tpush(56); t~tpush(57); t~tpush(58); t~tpush(59); t~tpush(60); t~tpush(61); t~tpush(62); t~tpush(63); t~tpush(64);
-  int i = 0;
+  ;; int i = 0;
   ;; repeat (26) { t~tpush(65 + ((i - shift) % 26)); i += 1; }
   t~tpush(((0 - shift) % 26) + 65); t~tpush(((1 - shift) % 26) + 65); t~tpush(((2 - shift) % 26) + 65); t~tpush(((3 - shift) % 26) + 65); t~tpush(((4 - shift) % 26) + 65); t~tpush(((5 - shift) % 26) + 65); t~tpush(((6 - shift) % 26) + 65); t~tpush(((7 - shift) % 26) + 65); t~tpush(((8 - shift) % 26) + 65); t~tpush(((9 - shift) % 26) + 65); t~tpush(((10 - shift) % 26) + 65); t~tpush(((11 - shift) % 26) + 65); t~tpush(((12 - shift) % 26) + 65); t~tpush(((13 - shift) % 26) + 65); t~tpush(((14 - shift) % 26) + 65); t~tpush(((15 - shift) % 26) + 65); t~tpush(((16 - shift) % 26) + 65); t~tpush(((17 - shift) % 26) + 65); t~tpush(((18 - shift) % 26) + 65); t~tpush(((19 - shift) % 26) + 65); t~tpush(((20 - shift) % 26) + 65); t~tpush(((21 - shift) % 26) + 65); t~tpush(((22 - shift) % 26) + 65); t~tpush(((23 - shift) % 26) + 65); t~tpush(((24 - shift) % 26) + 65); t~tpush(((25 - shift) % 26) + 65);
   ;; repeat (6) { t~tpush(i); i += 1; }
   t~tpush(91); t~tpush(92); t~tpush(93); t~tpush(94); t~tpush(95); t~tpush(96);
-  i = 0;
   ;; repeat (26) { t~tpush(((i - shift) % 26) + 97); i += 1; }
   t~tpush(((0 - shift) % 26) + 97); t~tpush(((1 - shift) % 26) + 97); t~tpush(((2 - shift) % 26) + 97); t~tpush(((3 - shift) % 26) + 97); t~tpush(((4 - shift) % 26) + 97); t~tpush(((5 - shift) % 26) + 97); t~tpush(((6 - shift) % 26) + 97); t~tpush(((7 - shift) % 26) + 97); t~tpush(((8 - shift) % 26) + 97); t~tpush(((9 - shift) % 26) + 97); t~tpush(((10 - shift) % 26) + 97); t~tpush(((11 - shift) % 26) + 97); t~tpush(((12 - shift) % 26) + 97); t~tpush(((13 - shift) % 26) + 97); t~tpush(((14 - shift) % 26) + 97); t~tpush(((15 - shift) % 26) + 97); t~tpush(((16 - shift) % 26) + 97); t~tpush(((17 - shift) % 26) + 97); t~tpush(((18 - shift) % 26) + 97); t~tpush(((19 - shift) % 26) + 97); t~tpush(((20 - shift) % 26) + 97); t~tpush(((21 - shift) % 26) + 97); t~tpush(((22 - shift) % 26) + 97); t~tpush(((23 - shift) % 26) + 97); t~tpush(((24 - shift) % 26) + 97); t~tpush(((25 - shift) % 26) + 97);
   ;; repeat (95) { t~tpush(i); i += 1; }
