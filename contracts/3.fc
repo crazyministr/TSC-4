@@ -83,7 +83,7 @@ forall X -> (tuple, X) ~pop_back(tuple t) asm "TPOP";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 const int CELL_LEN = 1023;
 const int CELL_LEN+1 = 1024;
-int tlen(tuple t) asm "TLEN";
+
 
 (builder) rec(int last_buffer_bit, int flag, int flag_len, int value, int value_bits, int buffer, int buffer_len, cell llist) {
   slice cs = llist.begin_parse();
@@ -94,7 +94,7 @@ int tlen(tuple t) asm "TLEN";
     buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
     buffer_len += bits_to_read;
   }
-  ;; int stack_len = 0;
+  int stack_len = 0;
   tuple stack = empty_tuple();
   builder preb = begin_cell();
   cs~touch();
@@ -108,11 +108,11 @@ int tlen(tuple t) asm "TLEN";
           int l = value_bits - bits_left;
           stack~tpush(preb.store_uint(value >> l, bits_left));
           preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
-          ;; stack_len += 1;
+          stack_len += 1;
         } else {
           stack~tpush(preb);
           preb = begin_cell().store_uint(value, value_bits);
-          ;; stack_len += 1;
+          stack_len += 1;
         }
       }
       ;; (buffer, buffer_len) = (0, 0);
@@ -120,20 +120,56 @@ int tlen(tuple t) asm "TLEN";
       buffer = cs~load_uint(bits_to_read);
       buffer_len = bits_to_read;
     } else {
-      int first_bit = buffer & last_buffer_bit;
-      buffer ^= first_bit;
-      int to_store_bit = 0;
-      if (first_bit) {
-        to_store_bit = 1;
+      int to_store = 0;
+      int to_store_len = 0;
+      int tmpf = flag;
+      while (buffer_len & (tmpf != buffer)) {
+        int first_bit = buffer & (1 << (buffer_len - 1));
+        buffer ^= first_bit;
+        if (first_bit) {
+          to_store = (to_store << 1) + 1;
+        } else {
+          to_store <<= 1;
+        }
+        to_store_len += 1;
+        tmpf >>= 1;
+        buffer_len -= 1;
       }
-      if (preb.builder_bits() < CELL_LEN) {  ;; + 1 < 1024
-        preb = preb.store_uint(to_store_bit, 1);
+
+      bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
+      buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
+      buffer_len += bits_to_read;
+
+      if (preb.builder_bits() + to_store_len < CELL_LEN+1) {
+        preb = preb.store_uint(to_store, to_store_len);
       } else {
-        stack~tpush(preb);
-        preb = begin_cell().store_uint(to_store_bit, 1);
-        ;; stack_len += 1;
+        int bits_left = CELL_LEN - preb.builder_bits();
+        if (bits_left) {
+          int l = to_store_len - bits_left;
+          stack~tpush(preb.store_uint(to_store >> l, bits_left));
+          preb = begin_cell().store_uint(to_store & ((1 << l) - 1), l);
+          stack_len += 1;
+        } else {
+          stack~tpush(preb);
+          preb = begin_cell().store_uint(to_store, to_store_len);
+          stack_len += 1;
+        }
       }
-      buffer = (buffer << 1) | cs~load_uint(1);
+
+      ;; int first_bit = buffer & last_buffer_bit;
+      ;; buffer ^= first_bit;
+      ;; int to_store_bit = 0;
+      ;; if (first_bit) {
+      ;;   to_store_bit = 1;
+      ;; }
+      ;; if (preb.builder_bits() < CELL_LEN) {  ;; + 1 < 1024
+      ;;   preb = preb.store_uint(to_store_bit, 1);
+      ;; } else {
+      ;;   stack~tpush(preb);
+      ;;   preb = begin_cell().store_uint(to_store_bit, 1);
+      ;;   stack_len += 1;
+      ;; }
+      ;; buffer = (buffer << 1) | cs~load_uint(1);
     }
   }
   if (buffer == flag) {
@@ -145,11 +181,11 @@ int tlen(tuple t) asm "TLEN";
         int l = value_bits - bits_left;
         stack~tpush(preb.store_uint(value >> l, bits_left));
         preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
-        ;; stack_len += 1;
+        stack_len += 1;
       } else {
         stack~tpush(preb);
         preb = begin_cell().store_uint(value, value_bits);
-        ;; stack_len += 1;
+        stack_len += 1;
       }
     }
     (buffer, buffer_len) = (0, 0);
@@ -172,7 +208,7 @@ int tlen(tuple t) asm "TLEN";
     }
   }
 
-  repeat (tlen(stack)) {
+  repeat (stack_len) {
     builder parent = stack~pop_back();
     preb = parent._store_builder_ref(preb);
   }
