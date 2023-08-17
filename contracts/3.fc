@@ -98,7 +98,8 @@ const int CELL_LEN+1 = 1024;
   tuple stack = empty_tuple();
   builder preb = begin_cell();
   cs~touch();
-  while (cs.slice_bits()) {
+  int css = cs.slice_bits();
+  while (css) {
     if (buffer == flag) {
       if (preb.builder_bits() + value_bits < CELL_LEN+1) {
         preb = preb.store_uint(value, value_bits);
@@ -115,7 +116,8 @@ const int CELL_LEN+1 = 1024;
           stack_len += 1;
         }
       }
-      bits_to_read = min(cs.slice_bits(), flag_len);
+      bits_to_read = min(css, flag_len);
+      css -= bits_to_read;
       buffer = cs~load_uint(bits_to_read);
       buffer_len = bits_to_read;
     } else {
@@ -146,7 +148,8 @@ const int CELL_LEN+1 = 1024;
           stack_len += 1;
         }
       }
-      bits_to_read = min(cs.slice_bits(), to_store_len);
+      bits_to_read = min(css, to_store_len);
+      css -= bits_to_read;
       buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
       buffer_len += bits_to_read;
     }
