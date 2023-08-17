@@ -123,9 +123,9 @@ const int CELL_LEN+1 = 1024;
       int tmpf = flag;
       do {
         int first_bit = buffer & (1 << (buffer_len - 1));
+        buffer_len -= 1;
         buffer ^= first_bit;
         tmpf >>= 1;
-        buffer_len -= 1;
       } until (tmpf == buffer);
 
       int to_store_len = flag_len - buffer_len;
