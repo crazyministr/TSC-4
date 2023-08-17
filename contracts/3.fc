@@ -85,7 +85,7 @@ const int CELL_LEN = 1023;
 const int CELL_LEN+1 = 1024;
 
 
-(builder) rec(int last_buffer_bit, int flag, int flag_len, int value, int value_bits, int buffer, int buffer_len, cell llist) {
+(builder) rec(int flag, int flag_len, int value, int value_bits, int buffer, int buffer_len, cell llist) {
   slice cs = llist.begin_parse();
 
   ;; read up to `flag_len - 1` bits
@@ -98,7 +98,7 @@ const int CELL_LEN+1 = 1024;
   tuple stack = empty_tuple();
   builder preb = begin_cell();
   cs~touch();
-  do {
+  while (cs.slice_bits()) {
     if (buffer == flag) {
       if (preb.builder_bits() + value_bits < CELL_LEN+1) {
         preb = preb.store_uint(value, value_bits);
@@ -149,9 +149,8 @@ const int CELL_LEN+1 = 1024;
       bits_to_read = min(cs.slice_bits(), to_store_len);
       buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
       buffer_len += bits_to_read;
-
     }
-  } until (~ cs.slice_bits());
+  }
   if (buffer == flag) {
     if (preb.builder_bits() + value_bits < CELL_LEN+1) {
       preb = preb.store_uint(value, value_bits);
@@ -172,7 +171,7 @@ const int CELL_LEN+1 = 1024;
   }
 
   if (cs.slice_refs()) {
-    builder inner_b = rec(last_buffer_bit, flag, flag_len, value, value_bits, buffer, buffer_len, cs.preload_ref());
+    builder inner_b = rec(flag, flag_len, value, value_bits, buffer, buffer_len, cs.preload_ref());
 
     preb = preb._store_builder_ref(inner_b);
     ;; if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
@@ -202,7 +201,7 @@ const int CELL_LEN+1 = 1024;
   int flag_len = ubitsize(flag);
   int value_len = ubitsize(value);
 
-  builder ans = rec((1 << (flag_len - 1)), flag, flag_len, value, value_len, 0, 0, linked_list);
+  builder ans = rec(flag, flag_len, value, value_len, 0, 0, linked_list);
   return ans.end_cell();
 
 }
