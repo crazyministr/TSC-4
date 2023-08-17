@@ -120,23 +120,27 @@ const int CELL_LEN+1 = 1024;
       buffer = cs~load_uint(bits_to_read);
       buffer_len = bits_to_read;
     } else {
-      int to_store = 0;
-      int to_store_len = 0;
+      ;; int to_store = 0;
+      ;; int to_store_len = 0;
+      int tbuffer = buffer;
       int tmpf = flag;
       while (tmpf != buffer) {
         int first_bit = buffer & (1 << (buffer_len - 1));
-        if (first_bit) {
-          to_store = (to_store << 1) + 1;
-        } else {
-          to_store <<= 1;
-        }
+        ;; if (first_bit) {
+        ;;   to_store = (to_store << 1) + 1;
+        ;; } else {
+        ;;   to_store <<= 1;
+        ;; }
         buffer ^= first_bit;
-        to_store_len += 1;
+        ;; to_store_len += 1;
         tmpf >>= 1;
         buffer_len -= 1;
       }
 
-      bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
+      int to_store_len = flag_len - buffer_len;
+      int to_store = tbuffer >> buffer_len;
+
+      bits_to_read = min(cs.slice_bits(), to_store_len);
       buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
       buffer_len += bits_to_read;
 
