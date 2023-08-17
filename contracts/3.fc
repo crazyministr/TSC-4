@@ -99,6 +99,7 @@ const int CELL_LEN+1 = 1024;
   tuple stack = empty_tuple();
   builder preb = begin_cell();
   ;; cs~touch();
+  if (cs.slice_bits()) {
   do {
     if (buffer == flag) {
       if (preb.builder_bits() + value_bits < CELL_LEN+1) {
@@ -167,6 +168,7 @@ const int CELL_LEN+1 = 1024;
     ;; buffer = (buffer << 1) | bit;
 
   } until (~ cs.slice_bits());
+  }
   if (buffer == flag) {
     if (preb.builder_bits() + value_bits < CELL_LEN+1) {
       preb = preb.store_uint(value, value_bits);
