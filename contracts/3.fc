@@ -131,10 +131,6 @@ const int CELL_LEN+1 = 1024;
       int to_store_len = flag_len - buffer_len;
       int to_store = tbuffer >> buffer_len;
 
-      bits_to_read = min(cs.slice_bits(), to_store_len);
-      buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
-      buffer_len += bits_to_read;
-
       if (preb.builder_bits() + to_store_len < CELL_LEN+1) {
         preb = preb.store_uint(to_store, to_store_len);
       } else {
@@ -150,6 +146,10 @@ const int CELL_LEN+1 = 1024;
           stack_len += 1;
         }
       }
+      bits_to_read = min(cs.slice_bits(), to_store_len);
+      buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
+      buffer_len += bits_to_read;
+
     }
   }
   if (buffer == flag) {
