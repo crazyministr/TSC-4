@@ -116,7 +116,7 @@ const int CELL_LEN+1 = 1024;
         }
       }
       (buffer, buffer_len) = (0, 0);
-      bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
+      bits_to_read = min(cs.slice_bits(), flag_len);
       buffer = cs~load_uint(bits_to_read);
       buffer_len = bits_to_read;
     } else {
@@ -197,7 +197,7 @@ const int CELL_LEN+1 = 1024;
     if (buffer == flag) {
       preb = preb.store_uint(value, value_bits);
       (buffer, buffer_len) = (0, 0);
-      bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
+      bits_to_read = min(cs.slice_bits(), flag_len);
       buffer = cs~load_uint(bits_to_read);
       buffer_len = bits_to_read;
     } else {
@@ -227,11 +227,11 @@ const int CELL_LEN+1 = 1024;
     ;;   preb = preb._store_builder_ref(inner_b);
     ;; }
   } elseif (buffer_len) {
-    if (preb.builder_bits() + buffer_len < CELL_LEN+1) {
+    ;; if (preb.builder_bits() + buffer_len < CELL_LEN+1) {
       preb = preb.store_uint(buffer, buffer_len);
-    } else {
-      preb = preb._store_builder_ref(begin_cell().store_uint(buffer, buffer_len));
-    }
+    ;; } else {
+      ;; preb = preb._store_builder_ref(begin_cell().store_uint(buffer, buffer_len));
+    ;; }
   }
 
   return preb;
@@ -249,6 +249,5 @@ const int CELL_LEN+1 = 1024;
     builder ans = rec::cut((1 << (flag_len - 1)), flag, flag_len, value, value_len, 0, 0, linked_list);
     return ans.end_cell();
   }
-  
-  
+
 }
