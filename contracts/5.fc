@@ -71,13 +71,14 @@ TUPLEVAR
   cell d = big:dicKt();
   (slice value, _) = d.custom::udict_get?(9, n);
   int fn = value~load_uint(256);
-  int fn+1 = value.preload_uint(256);
+  
   ;; (int fn, int fn+1) = fn(n);
   if (k == 1) {
     return to_tuple([fn]);
   }
   ;; res~tpush(fn+1);
   ;; k -= 2;
+  int fn+1 = value.preload_uint(256);
   return fib_seq(fn, fn+1, k - 2);
   ;; res = ff(fn, fn+1, k);
   ;; repeat (k) {
