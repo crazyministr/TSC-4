@@ -50,6 +50,30 @@ TUPLEVAR
 """;
 
 
+tuple fib(int k, int n, cell d) asm """
+    9 PUSHINT	//  k n d _9=9
+    DICTUGET	//  k _25 _26
+    DROP	//  k value
+    256 LDU	//  k fn value
+    s2 PUSH	//  k fn value k
+    1 EQINT	//  k fn value _16
+    IFJMP:<{	//  k fn value
+      DROP
+      NIP	//  fn
+      SINGLE	//  _18
+    }>	//  k fn value
+    256 LDU	//  k fn fn+1
+    ROT       // fn fn+1 k
+    -2 ADDCONST	//  fn fn+1 _23
+    REPEAT:<{
+      s0 s1 PUSH2  // fn fn+1 fn fn+1
+      ADD          // fn fn+1 fn+2 
+    }>
+    DEPTH
+    TUPLEVAR
+    1 RETARGS	//  _24
+""";
+
 ;; tuple ff(int fn, int fn+1, int k) {
 ;;   tuple r = empty_tuple();
 ;;   repeat (k) {
@@ -69,24 +93,13 @@ TUPLEVAR
   ;; }
 
   cell d = big:dicKt();
-  (slice value, _) = d.custom::udict_get?(9, n);
-  int fn = value~load_uint(256);
+  return fib(k, n, d);
+  ;; (slice value, _) = d.custom::udict_get?(9, n);
+  ;; int fn = value~load_uint(256);
   
-  ;; (int fn, int fn+1) = fn(n);
-  if (k == 1) {
-    return to_tuple([fn]);
-  }
-  ;; res~tpush(fn+1);
-  ;; k -= 2;
-  int fn+1 = value.preload_uint(256);
-  return fib_seq(fn, fn+1, k - 2);
-  ;; res = ff(fn, fn+1, k);
-  ;; repeat (k) {
-    ;; int nxt = fn + fn+1;
-    ;; res~tpush(nxt);
-    ;; nxt~dump();
-    ;; (fn, fn+1) = (fn+1, fn + fn+1);
-    ;; res~tpush(fn+1);
+  ;; if (k == 1) {
+  ;;   return to_tuple([fn]);
   ;; }
-  ;; return res;
+  ;; int fn+1 = value.preload_uint(256);
+  ;; return fib_seq(fn, fn+1, k - 2);
 }
