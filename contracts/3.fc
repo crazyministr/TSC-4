@@ -123,14 +123,14 @@ const int CELL_LEN+1 = 1024;
       int to_store = 0;
       int to_store_len = 0;
       int tmpf = flag;
-      while (buffer_len & (tmpf != buffer)) {
+      while (tmpf != buffer) {
         int first_bit = buffer & (1 << (buffer_len - 1));
-        buffer ^= first_bit;
         if (first_bit) {
           to_store = (to_store << 1) + 1;
         } else {
           to_store <<= 1;
         }
+        buffer ^= first_bit;
         to_store_len += 1;
         tmpf >>= 1;
         buffer_len -= 1;
