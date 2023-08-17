@@ -98,8 +98,9 @@ const int CELL_LEN+1 = 1024;
   int stack_len = 0;
   tuple stack = empty_tuple();
   builder preb = begin_cell();
-  ;; cs~touch();
+  cs~touch();
   ;; if (cs.slice_bits()) {
+  ;; do {
   while (cs.slice_bits()) {
     if (buffer == flag) {
       ;; int x = 111;
