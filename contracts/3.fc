@@ -89,8 +89,8 @@ const int CELL_LEN+1 = 1024;
   slice cs = llist.begin_parse();
 
   ;; read up to `flag_len - 1` bits
-  int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len - 1);
-  if (bits_to_read > 0) {
+  int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
+  if (bits_to_read) {
     buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
     buffer_len += bits_to_read;
   }
@@ -98,51 +98,92 @@ const int CELL_LEN+1 = 1024;
   int stack_len = 0;
   tuple stack = empty_tuple();
   builder preb = begin_cell();
-  cs~touch();
-  repeat (cs.slice_bits()) {
-    int bit = cs~load_uint(1);
-
-    if (buffer_len == flag_len) {  ;; shift buffer
-      ;; int first_bit_pos = 1 << (buffer_len - 1);
-      int first_bit = buffer & last_buffer_bit;
-      buffer ^= first_bit;
-      int to_store_bit = 0;
-      if (first_bit) {
-        to_store_bit = 1;
-      }
-      ;; if (preb.builder_bits() < CELL_LEN) {  ;; + 1 < 1024
-        preb = preb.store_uint(to_store_bit, 1);
-      ;; } else {
-      ;;   stack~tpush(preb);
-      ;;   preb = begin_cell().store_uint(to_store_bit, 1);
-      ;;   stack_len += 1;
-      ;; }
-    } else {
-      buffer_len += 1;
-    }
-    buffer = (buffer << 1) | bit;
-
+  ;; cs~touch();
+  do {
     if (buffer == flag) {
+      if (preb.builder_bits() + value_bits < CELL_LEN+1) {
+        preb = preb.store_uint(value, value_bits);
+      } else {
+        int bits_left = CELL_LEN - preb.builder_bits();
+        if (bits_left) {
+          int l = value_bits - bits_left;
+          stack~tpush(preb.store_uint(value >> l, bits_left));
+          preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
+          stack_len += 1;
+        } else {
           stack~tpush(preb);
           preb = begin_cell().store_uint(value, value_bits);
           stack_len += 1;
-      ;; if (preb.builder_bits() + value_bits < CELL_LEN+1) {
-      ;;   preb = preb.store_uint(value, value_bits);
-      ;; } else {
-      ;;   int bits_left = CELL_LEN - preb.builder_bits();
-      ;;   if (bits_left) {
-      ;;     int l = value_bits - bits_left;
-      ;;     stack~tpush(preb.store_uint(value >> l, bits_left));
-      ;;     preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
-      ;;     stack_len += 1;
-      ;;   } else {
-      ;;     stack~tpush(preb);
-      ;;     preb = begin_cell().store_uint(value, value_bits);
-      ;;     stack_len += 1;
-      ;;   }
-      ;; }
+        }
+      }
       (buffer, buffer_len) = (0, 0);
+      bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
+      if (bits_to_read) {
+        buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
+        buffer_len += bits_to_read;
+      }
+    } else {
+      if (buffer_len == flag_len) { 
+        int first_bit = buffer & last_buffer_bit;
+        buffer ^= first_bit;
+        int to_store_bit = 0;
+        if (first_bit) {
+          to_store_bit = 1;
+        }
+        if (preb.builder_bits() < CELL_LEN) {  ;; + 1 < 1024
+          preb = preb.store_uint(to_store_bit, 1);
+        } else {
+          stack~tpush(preb);
+          preb = begin_cell().store_uint(to_store_bit, 1);
+          stack_len += 1;
+        }
+      } else {
+        buffer_len += 1;
+      }
+      buffer = (buffer << 1) | cs~load_uint(1);
     }
+
+
+    ;; int bit = cs~load_uint(1);
+    ;; if (buffer_len == flag_len) {  ;; shift buffer
+    ;;   ;; int first_bit_pos = 1 << (buffer_len - 1);
+    ;;   int first_bit = buffer & last_buffer_bit;
+    ;;   buffer ^= first_bit;
+    ;;   int to_store_bit = 0;
+    ;;   if (first_bit) {
+    ;;     to_store_bit = 1;
+    ;;   }
+    ;;   if (preb.builder_bits() < CELL_LEN) {  ;; + 1 < 1024
+    ;;     preb = preb.store_uint(to_store_bit, 1);
+    ;;   } else {
+    ;;     stack~tpush(preb);
+    ;;     preb = begin_cell().store_uint(to_store_bit, 1);
+    ;;     stack_len += 1;
+    ;;   }
+    ;; } else {
+    ;;   buffer_len += 1;
+    ;; }
+
+    ;; buffer = (buffer << 1) | bit;
+
+  } until (~ cs.slice_bits());
+  if (buffer == flag) {
+    if (preb.builder_bits() + value_bits < CELL_LEN+1) {
+      preb = preb.store_uint(value, value_bits);
+    } else {
+      int bits_left = CELL_LEN - preb.builder_bits();
+      if (bits_left) {
+        int l = value_bits - bits_left;
+        stack~tpush(preb.store_uint(value >> l, bits_left));
+        preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
+        stack_len += 1;
+      } else {
+        stack~tpush(preb);
+        preb = begin_cell().store_uint(value, value_bits);
+        stack_len += 1;
+      }
+    }
+    (buffer, buffer_len) = (0, 0);
   }
 
   if (cs.slice_refs()) {
