@@ -37,12 +37,32 @@
 """;
 
 (slice, int) custom::udict_get?(cell dict, int key_len, int index) asm(index dict key_len) "DICTUGET";
+forall X -> (tuple) to_tuple (X x) asm "NOP";
+
+tuple fib_seq(int fn, int fn+1, int k) asm """
+REPEAT:<{
+  s0 s1 PUSH2  // fn fn+1 fn fn+1
+  ADD          // fn fn+1 fn+2 
+}>
+DEPTH
+TUPLEVAR
+1 RETARGS
+""";
+
+
+;; tuple ff(int fn, int fn+1, int k) {
+;;   tuple r = empty_tuple();
+;;   repeat (k) {
+;;     int nxt = fn + fn+1;
+;;     r~tpush(nxt);
+;;   }
+;;   return r;
+;; }
 
 (tuple) fibonacci_sequence (int n, int k) method_id {
   if (k == 0) {
     return empty_tuple();
   }
-  tuple res = empty_tuple();
   ;; if (n == 370) {
   ;;   res~tpush(94611056096305838013295371573764256526437182762229865607320618320601813254535);
   ;;   return res;
@@ -53,15 +73,19 @@
   int fn = value~load_uint(256);
   int fn+1 = value.preload_uint(256);
   ;; (int fn, int fn+1) = fn(n);
-  res~tpush(fn);
   if (k == 1) {
-    return res;
+    return to_tuple([fn]);
   }
-  res~tpush(fn+1);
-  k -= 2;
-  repeat (k) {
-    (fn, fn+1) = (fn+1, fn + fn+1);
-    res~tpush(fn+1);
-  };
-  return res;
+  ;; res~tpush(fn+1);
+  ;; k -= 2;
+  return fib_seq(fn, fn+1, k - 2);
+  ;; res = ff(fn, fn+1, k);
+  ;; repeat (k) {
+    ;; int nxt = fn + fn+1;
+    ;; res~tpush(nxt);
+    ;; nxt~dump();
+    ;; (fn, fn+1) = (fn+1, fn + fn+1);
+    ;; res~tpush(fn+1);
+  ;; }
+  ;; return res;
 }
