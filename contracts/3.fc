@@ -242,7 +242,7 @@ const int CELL_LEN+1 = 1024;
   int flag_len = ubitsize(flag);
   int value_len = ubitsize(value);
 
-  if (flag_len <= value_len) {
+  if (flag_len < value_len) {
     builder ans = rec((1 << (flag_len - 1)), flag, flag_len, value, value_len, 0, 0, linked_list);
     return ans.end_cell();
   } else {
