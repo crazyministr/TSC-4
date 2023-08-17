@@ -82,6 +82,7 @@ forall X -> int is_null?(X x) asm "ISNULL";
 forall X -> (tuple, X) ~pop_back(tuple t) asm "TPOP";
 builder _store_builder_ref(builder to, builder what) asm(what to) "STBREF";
 const int CELL_LEN = 1023;
+const int CELL_LEN+1 = 1024;
 
 
 (builder) rec(int last_buffer_bit, int flag, int flag_len, int value, int value_bits, int buffer, int buffer_len, cell llist) {
@@ -109,34 +110,37 @@ const int CELL_LEN = 1023;
       if (first_bit) {
         to_store_bit = 1;
       }
-      if (preb.builder_bits() < CELL_LEN) {  ;; + 1 < 1024
+      ;; if (preb.builder_bits() < CELL_LEN) {  ;; + 1 < 1024
         preb = preb.store_uint(to_store_bit, 1);
-      } else {
-        stack~tpush(preb);
-        stack_len += 1;
-        preb = begin_cell().store_uint(to_store_bit, 1);
-      }
+      ;; } else {
+      ;;   stack~tpush(preb);
+      ;;   preb = begin_cell().store_uint(to_store_bit, 1);
+      ;;   stack_len += 1;
+      ;; }
     } else {
       buffer_len += 1;
     }
     buffer = (buffer << 1) | bit;
 
     if (buffer == flag) {
-      if (preb.builder_bits() + value_bits < 1024) {
-        preb = preb.store_uint(value, value_bits);
-      } else {
-        int bits_left = CELL_LEN - preb.builder_bits();
-        if (bits_left) {
-          int l = value_bits - bits_left;
-          stack~tpush(preb.store_uint(value >> l, bits_left));
-          stack_len += 1;
-          preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
-        } else {
           stack~tpush(preb);
-          stack_len += 1;
           preb = begin_cell().store_uint(value, value_bits);
-        }
-      }
+          stack_len += 1;
+      ;; if (preb.builder_bits() + value_bits < CELL_LEN+1) {
+      ;;   preb = preb.store_uint(value, value_bits);
+      ;; } else {
+      ;;   int bits_left = CELL_LEN - preb.builder_bits();
+      ;;   if (bits_left) {
+      ;;     int l = value_bits - bits_left;
+      ;;     stack~tpush(preb.store_uint(value >> l, bits_left));
+      ;;     preb = begin_cell().store_uint(value & ((1 << l) - 1), l);
+      ;;     stack_len += 1;
+      ;;   } else {
+      ;;     stack~tpush(preb);
+      ;;     preb = begin_cell().store_uint(value, value_bits);
+      ;;     stack_len += 1;
+      ;;   }
+      ;; }
       (buffer, buffer_len) = (0, 0);
     }
   }
@@ -151,7 +155,7 @@ const int CELL_LEN = 1023;
     ;;   preb = preb._store_builder_ref(inner_b);
     ;; }
   } elseif (buffer_len) {
-    if (preb.builder_bits() + buffer_len < 1024) {
+    if (preb.builder_bits() + buffer_len < CELL_LEN+1) {
       preb = preb.store_uint(buffer, buffer_len);
     } else {
       ;; stack~tpush(preb);
