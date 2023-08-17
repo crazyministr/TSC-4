@@ -115,27 +115,18 @@ const int CELL_LEN+1 = 1024;
           stack_len += 1;
         }
       }
-      ;; (buffer, buffer_len) = (0, 0);
       bits_to_read = min(cs.slice_bits(), flag_len);
       buffer = cs~load_uint(bits_to_read);
       buffer_len = bits_to_read;
     } else {
-      ;; int to_store = 0;
-      ;; int to_store_len = 0;
       int tbuffer = buffer;
       int tmpf = flag;
-      while (tmpf != buffer) {
+      do {
         int first_bit = buffer & (1 << (buffer_len - 1));
-        ;; if (first_bit) {
-        ;;   to_store = (to_store << 1) + 1;
-        ;; } else {
-        ;;   to_store <<= 1;
-        ;; }
         buffer ^= first_bit;
-        ;; to_store_len += 1;
         tmpf >>= 1;
         buffer_len -= 1;
-      }
+      } until (tmpf == buffer);
 
       int to_store_len = flag_len - buffer_len;
       int to_store = tbuffer >> buffer_len;
@@ -159,21 +150,6 @@ const int CELL_LEN+1 = 1024;
           stack_len += 1;
         }
       }
-
-      ;; int first_bit = buffer & last_buffer_bit;
-      ;; buffer ^= first_bit;
-      ;; int to_store_bit = 0;
-      ;; if (first_bit) {
-      ;;   to_store_bit = 1;
-      ;; }
-      ;; if (preb.builder_bits() < CELL_LEN) {  ;; + 1 < 1024
-      ;;   preb = preb.store_uint(to_store_bit, 1);
-      ;; } else {
-      ;;   stack~tpush(preb);
-      ;;   preb = begin_cell().store_uint(to_store_bit, 1);
-      ;;   stack_len += 1;
-      ;; }
-      ;; buffer = (buffer << 1) | cs~load_uint(1);
     }
   }
   if (buffer == flag) {
