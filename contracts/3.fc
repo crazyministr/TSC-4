@@ -115,7 +115,7 @@ const int CELL_LEN+1 = 1024;
           stack_len += 1;
         }
       }
-      (buffer, buffer_len) = (0, 0);
+      ;; (buffer, buffer_len) = (0, 0);
       bits_to_read = min(cs.slice_bits(), flag_len);
       buffer = cs~load_uint(bits_to_read);
       buffer_len = bits_to_read;
@@ -182,72 +182,12 @@ const int CELL_LEN+1 = 1024;
 }
 
 
-(builder) rec::cut(int last_buffer_bit, int flag, int flag_len, int value, int value_bits, int buffer, int buffer_len, cell llist) {
-  slice cs = llist.begin_parse();
-
-  ;; read up to `flag_len - 1` bits
-  int bits_to_read = min(cs.slice_bits(), flag_len - buffer_len);
-  if (bits_to_read) {
-    buffer = (buffer << bits_to_read) | cs~load_uint(bits_to_read);
-    buffer_len += bits_to_read;
-  }
-  builder preb = begin_cell();
-  cs~touch();
-  while (cs.slice_bits()) {
-    if (buffer == flag) {
-      preb = preb.store_uint(value, value_bits);
-      (buffer, buffer_len) = (0, 0);
-      bits_to_read = min(cs.slice_bits(), flag_len);
-      buffer = cs~load_uint(bits_to_read);
-      buffer_len = bits_to_read;
-    } else {
-      int first_bit = buffer & last_buffer_bit;
-      buffer ^= first_bit;
-      int to_store_bit = 0;
-      if (first_bit) {
-        to_store_bit = 1;
-      }
-      preb = preb.store_uint(to_store_bit, 1);
-      buffer = (buffer << 1) | cs~load_uint(1);
-    }
-
-  }
-  if (buffer == flag) {
-    preb = preb.store_uint(value, value_bits);
-    (buffer, buffer_len) = (0, 0);
-  }
-
-  if (cs.slice_refs()) {
-    builder inner_b = rec::cut(last_buffer_bit, flag, flag_len, value, value_bits, buffer, buffer_len, cs.preload_ref());
-
-    preb = preb._store_builder_ref(inner_b);
-    ;; if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
-    ;;   preb = preb.store_builder(inner_b);
-    ;; } else {
-    ;;   preb = preb._store_builder_ref(inner_b);
-    ;; }
-  } elseif (buffer_len) {
-    ;; if (preb.builder_bits() + buffer_len < CELL_LEN+1) {
-      preb = preb.store_uint(buffer, buffer_len);
-    ;; } else {
-      ;; preb = preb._store_builder_ref(begin_cell().store_uint(buffer, buffer_len));
-    ;; }
-  }
-
-  return preb;
-}
-
 ;; testable
 (cell) find_and_replace(int flag, int value, cell linked_list) method_id {
   int flag_len = ubitsize(flag);
   int value_len = ubitsize(value);
 
-  if (flag_len < value_len) {
-    builder ans = rec((1 << (flag_len - 1)), flag, flag_len, value, value_len, 0, 0, linked_list);
-    return ans.end_cell();
-  } else {
-    builder ans = rec::cut((1 << (flag_len - 1)), flag, flag_len, value, value_len, 0, 0, linked_list);
-    return ans.end_cell();
-  }
+  builder ans = rec((1 << (flag_len - 1)), flag, flag_len, value, value_len, 0, 0, linked_list);
+  return ans.end_cell();
 
 }
