@@ -220,12 +220,12 @@ const int CELL_LEN+1 = 1024;
   if (cs.slice_refs()) {
     builder inner_b = rec::cut(last_buffer_bit, flag, flag_len, value, value_bits, buffer, buffer_len, cs.preload_ref());
 
-    ;; preb = preb._store_builder_ref(inner_b);
-    if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
-      preb = preb.store_builder(inner_b);
-    } else {
-      preb = preb._store_builder_ref(inner_b);
-    }
+    preb = preb._store_builder_ref(inner_b);
+    ;; if (preb.builder_bits() + inner_b.builder_bits() < 1024) {
+    ;;   preb = preb.store_builder(inner_b);
+    ;; } else {
+    ;;   preb = preb._store_builder_ref(inner_b);
+    ;; }
   } elseif (buffer_len) {
     if (preb.builder_bits() + buffer_len < CELL_LEN+1) {
       preb = preb.store_uint(buffer, buffer_len);
