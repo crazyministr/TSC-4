@@ -30,21 +30,54 @@ forall X -> int is_null?(X x) asm "ISNULL";
 -}
 
 
+cell solve (int hash, cell tree) asm """
+    PUSHNULL	//  hash tree deque
+    CONS	//  hash deque
+    UNTIL:<{
+      UNCONS	//  hash tree deque
+      OVER	//  hash tree deque tree
+      HASHCU	//  hash tree deque _6
+      s3 PUSH	//  hash tree deque _6 hash
+      EQUAL	//  hash tree deque _7
+      IFJMP:<{	//  hash tree deque
+        DROP
+        NIP	//  tree
+        RETALT
+      }>	//  hash tree deque
+      SWAP	//  hash deque tree
+      CTOS	//  hash deque node
+      DUP	//  hash deque node node
+      SREFS	//  hash deque node _10
+      REPEAT:<{	//  hash deque node
+        LDREF	//  hash deque _11 node
+        s0 s2 XCHG	//  hash node _11 deque
+        CONS	//  hash node deque
+        SWAP	//  hash deque node
+      }>
+      DROP	//  hash deque
+      DUP	//  hash deque deque
+      ISNULL	//  hash deque _14
+    }>	//  hash deque
+    2DROP	// 
+    NEWC	//  _15
+    ENDC	//  _16
+""";
+
 ;; testable
 (cell) find_branch_by_hash(int hash, cell tree) method_id {
-  ;; cell res = rec(hash, tree);
-  tuple deque = null();
-  deque = cons(tree, deque);
+  return solve (hash, tree);
+  ;; tuple deque = null();
+  ;; deque = cons(tree, deque);
   
-  do {
-    (tree, deque) = uncons(deque);
-    if (cell_hash(tree) == hash) {
-      return tree;
-    }
-    slice node = tree.begin_parse();
-    repeat (node.slice_refs()) {
-      deque = cons(node~load_ref(), deque);
-    }
-  } until (is_null?(deque));
-  return begin_cell().end_cell();
+  ;; do {
+  ;;   (tree, deque) = uncons(deque);
+  ;;   if (cell_hash(tree) == hash) {
+  ;;     return tree;
+  ;;   }
+  ;;   slice node = tree.begin_parse();
+  ;;   repeat (node.slice_refs()) {
+  ;;     deque = cons(node~load_ref(), deque);
+  ;;   }
+  ;; } until (is_null?(deque));
+  ;; return begin_cell().end_cell();
 }
