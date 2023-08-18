@@ -64,9 +64,48 @@ cell solve (int hash, cell tree) asm """
     ENDC	//  _16
 """;
 
+
+cell solve::2 (int hash, cell tree) asm """
+    SAMEALTSAVE
+    PUSHNULL	//  hash tree deque
+    CONS	//  hash deque
+    UNTIL:<{
+      UNCONS	//  hash tree deque
+      SWAP // hash deque tree
+      DUP  // hash deque tree tree
+      HASHCU	//  hash deque tree _6
+      s3 PUSH	//  hash deque tree _6 hash
+      EQUAL	//  hash deque tree _7
+      IFJMP:<{	//  hash deque tree
+         c1 PUSH
+         1 JMPXARGS
+         // NIP	//  tree
+         // NIP
+          RETALT
+      }>	//  hash deque tree
+      CTOS	//  hash deque node
+      DUP	//  hash deque node node
+      SREFS	//  hash deque node _10
+      REPEAT:<{	//  hash deque node
+        LDREF	//  hash deque _11 node
+        s0 s2 XCHG	//  hash node _11 deque
+        CONS	//  hash node deque
+        SWAP	//  hash deque node
+      }>
+      DROP	//  hash deque
+      DUP	//  hash deque deque
+      ISNULL	//  hash deque _14
+    }>	//  hash deque
+    2DROP	// 
+    NEWC	//  _15
+    ENDC	//  _16
+""";
+
+
 ;; testable
 (cell) find_branch_by_hash(int hash, cell tree) method_id {
-  return solve (hash, tree);
+  ;; return solve (hash, tree);
+  return solve::2 (hash, tree);
   ;; tuple deque = null();
   ;; deque = cons(tree, deque);
   
