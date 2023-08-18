@@ -31,6 +31,7 @@ forall X -> int is_null?(X x) asm "ISNULL";
 
 
 cell solve (int hash, cell tree) asm """
+    SAMEALTSAVE
     PUSHNULL	//  hash tree deque
     CONS	//  hash deque
     UNTIL:<{
